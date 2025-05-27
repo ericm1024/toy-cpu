@@ -6,10 +6,13 @@
 #include <vector>
 
 // TODOs:
-// * assembler
-// * split to files
-// * factor out execution of individual instructions into their own functions
 // * share load/store code
+// * split to files
+// * better test coverage
+// * assembler
+// * makefile
+// * asan
+// * mov instruction with immediate encoding
 
 using word_t = uint32_t;
 
@@ -257,6 +260,11 @@ struct system_state
 
     void run();
 
+    void execute_set(reg dest, word_t value);
+    void execute_store(reg addr, reg src, word_t width_sel);
+    void execute_add(reg dest, reg op1, reg op2);
+    void execute_load(reg dest, reg src, word_t width_sel);
+
     std::vector<uint8_t> console;
     std::unique_ptr<word_t[]> rom;
     std::unique_ptr<word_t[]> ram;
@@ -276,35 +284,20 @@ void system_state::run()
             reg dest;
             word_t value;
             instr.decode_set(&dest, &value);
-            cpu.get(dest) = value;
+            execute_set(dest, value);
             break;
         }
         case opcode::store: {
-            reg addr;
-            reg src;
+            reg addr, src;
             word_t width_sel;
             instr.decode_store(&addr, &src, &width_sel);
-            word_t dest_addr = cpu.get(addr);
-            if (width_sel == 0) {
-                if (dest_addr == iomap::k_console_write) {
-                    console.push_back(static_cast<uint8_t>(cpu.get(src)));
-                } else {
-                    assert(false && "unhandled addr");
-                }
-            } else if (width_sel == 2) {
-                assert((dest_addr % k_word_size) == 0);
-                if (dest_addr >= iomap::k_ram_base && dest_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
-                    *(ram.get() + (dest_addr - iomap::k_ram_base)/k_word_size) = cpu.get(src);
-                }
-            } else {
-                assert(false && "unhandled width_sel");
-            }
+            execute_store(addr, src, width_sel);
             break;
         }
         case opcode::add: {
             reg dest, op1, op2;
             instr.decode_add(&dest, &op1, &op2);
-            cpu.get(dest) = cpu.get(op1) + cpu.get(op2);
+            execute_add(dest, op1, op2);
             break;
         }
         case opcode::halt:
@@ -313,28 +306,62 @@ void system_state::run()
             reg dest, src;
             word_t width_sel;
             instr.decode_load(&dest, &src, &width_sel);
-            if (width_sel == 2) {
-                word_t src_addr = cpu.get(src);
-                assert(((src_addr % k_word_size) == 0) && "unaligned load");
-
-                word_t val;
-                if (src_addr >= iomap::k_ram_base && src_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
-                    val = *(ram.get() + (src_addr - iomap::k_ram_base)/k_word_size);
-                } else if (src_addr >= iomap::k_rom_base && src_addr <= iomap::k_rom_base + iomap::k_rom_size - k_word_size) {
-                    val = *(rom.get() + (src_addr - iomap::k_rom_base)/k_word_size);
-                } else {
-                    assert(false && "unhandled load addr");
-                }
-                printf("load r%d = %d\n", raw(dest), val);
-                cpu.get(dest) = val;
-            } else {
-                assert(false && "unhandled width_sel");
-            }
+            execute_load(dest, src, width_sel);
             break;
         }
         default:
             assert(false && "unknown opcode");
         }
+    }
+}
+
+void system_state::execute_set(reg dest, word_t value)
+{
+    cpu.get(dest) = value;
+}
+
+void system_state::execute_store(reg addr, reg src, word_t width_sel)
+{
+    word_t dest_addr = cpu.get(addr);
+    if (width_sel == 0) {
+        if (dest_addr == iomap::k_console_write) {
+            console.push_back(static_cast<uint8_t>(cpu.get(src)));
+        } else {
+            assert(false && "unhandled addr");
+        }
+    } else if (width_sel == 2) {
+        assert((dest_addr % k_word_size) == 0);
+        if (dest_addr >= iomap::k_ram_base && dest_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
+            *(ram.get() + (dest_addr - iomap::k_ram_base)/k_word_size) = cpu.get(src);
+        }
+    } else {
+        assert(false && "unhandled width_sel");
+    }
+}
+
+void system_state::execute_add(reg dest, reg op1, reg op2)
+{
+    cpu.get(dest) = cpu.get(op1) + cpu.get(op2);
+}
+
+void system_state::execute_load(reg dest, reg src, word_t width_sel)
+{
+    if (width_sel == 2) {
+        word_t src_addr = cpu.get(src);
+        assert(((src_addr % k_word_size) == 0) && "unaligned load");
+
+        word_t val;
+        if (src_addr >= iomap::k_ram_base && src_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
+            val = *(ram.get() + (src_addr - iomap::k_ram_base)/k_word_size);
+        } else if (src_addr >= iomap::k_rom_base && src_addr <= iomap::k_rom_base + iomap::k_rom_size - k_word_size) {
+            val = *(rom.get() + (src_addr - iomap::k_rom_base)/k_word_size);
+        } else {
+            assert(false && "unhandled load addr");
+        }
+        printf("load r%d = %d\n", raw(dest), val);
+        cpu.get(dest) = val;
+    } else {
+        assert(false && "unhandled width_sel");
     }
 }
 
