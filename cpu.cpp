@@ -2,7 +2,6 @@
 
 // TODOs:
 // * assembler
-// * asan
 // * mov instruction with immediate encoding
 // * IWYU
 // * code coverage

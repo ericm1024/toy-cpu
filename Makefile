@@ -1,13 +1,13 @@
 
 CXX=clang++
-CXXFLAGS=-Wall -Wextra -pedantic -std=c++20 -g #-fsanitize=address -fsanitize=undefined 
+CXXFLAGS=-Wall -Wextra -pedantic -std=c++20 -g -fsanitize=address -fsanitize=undefined
 
 SRCS := $(wildcard *.cpp)
 
 cpu: $(SRCS) *.h
 	$(CXX) $(CXXFLAGS) -o $@ $(SRCS)
 
-.PHONY: tests       
+.PHONY: tests
 tests: cpu
 	./cpu
 

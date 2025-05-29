@@ -4,8 +4,8 @@
 #include "opcode.h"
 
 system_state::system_state(std::span<word_t const> program)
-    : rom{std::make_unique<uint8_t[]>(iomap::k_rom_size / sizeof(word_t))}
-    , ram{std::make_unique<uint8_t[]>(iomap::k_ram_size / sizeof(word_t))}
+    : rom{std::make_unique<uint8_t[]>(iomap::k_rom_size)}
+    , ram{std::make_unique<uint8_t[]>(iomap::k_ram_size)}
 {
     memset(rom.get(), 0, iomap::k_rom_size);
     memset(ram.get(), 0, iomap::k_ram_size);
