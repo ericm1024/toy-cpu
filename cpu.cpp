@@ -6,7 +6,6 @@
 #include <vector>
 
 // TODOs:
-// * share load/store code
 // * split to files
 // * better test coverage
 // * assembler
@@ -72,9 +71,9 @@ enum class opcode : uint8_t
 {
     set,
     store,
+    load,
     add,
     halt,
-    load,
 };
 
 static constexpr word_t raw(opcode op)
@@ -141,17 +140,18 @@ struct instr
         *value = tmp >> k_reg_bits;
     }
 
-    static instr store(reg addr, reg src,
-                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+private:
+    static instr load_store(opcode op, reg addr, reg src,
+                            word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
     {
+        assert(op == opcode::load || op == opcode::store);
         assert(width_sel < 3);
-        return {opcode::store, raw(addr) | raw(src) << (k_reg_bits) |
+        return {op, raw(addr) | raw(src) << (k_reg_bits) |
                 width_sel << (2 * k_reg_bits) };
     }
 
-    void decode_store(reg * addr, reg * src, word_t * width_sel) const
+    void decode_load_store(reg * addr, reg * src, word_t * width_sel) const
     {
-        assert(get_opcode() == opcode::store);
         word_t tmp = storage >> k_opcode_bits;
         *addr = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
@@ -159,6 +159,19 @@ struct instr
         tmp >>= k_reg_bits;
         *width_sel = tmp & 0x3;
         assert(*width_sel < 3);
+    }
+
+public:
+    static instr store(reg addr, reg src,
+                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    {
+        return load_store(opcode::store, addr, src, width_sel);
+    }
+
+    void decode_store(reg * addr, reg * src, word_t * width_sel) const
+    {
+        assert(get_opcode() == opcode::store);
+        decode_load_store(addr, src, width_sel);
     }
 
     static instr store1(reg addr, reg src)
@@ -174,6 +187,33 @@ struct instr
     static instr store4(reg addr, reg src)
     {
         return store(addr, src, 2);
+    }
+
+    static instr load(reg addr, reg src,
+                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    {
+        return load_store(opcode::load, addr, src, width_sel);
+    }
+
+    void decode_load(reg * dest, reg * src, word_t * width_sel) const
+    {
+        assert(get_opcode() == opcode::load);
+        decode_load_store(dest, src, width_sel);
+    }
+
+    static instr load1(reg dest, reg src)
+    {
+        return load(dest, src, 0);
+    }
+
+    static instr load2(reg dest, reg src)
+    {
+        return load(dest, src, 1);
+    }
+
+    static instr load4(reg dest, reg src)
+    {
+        return load(dest, src, 2);
     }
 
     static instr add(reg dest, reg op1, reg op2)
@@ -196,41 +236,6 @@ struct instr
         return {opcode::halt, 0};
     }
 
-    static instr load(reg addr, reg src,
-                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
-    {
-        assert(width_sel < 3);
-        return {opcode::load, raw(addr) | raw(src) << (k_reg_bits) |
-                width_sel << (2 * k_reg_bits) };
-    }
-
-    void decode_load(reg * dest, reg * src, word_t * width_sel) const
-    {
-        assert(get_opcode() == opcode::load);
-        word_t tmp = storage >> k_opcode_bits;
-        *dest = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        *src = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        *width_sel = tmp & 0x3;
-        assert(*width_sel < 3);
-    }
-
-    static instr load1(reg dest, reg src)
-    {
-        return load(dest, src, 0);
-    }
-
-    static instr load2(reg dest, reg src)
-    {
-        return load(dest, src, 1);
-    }
-
-    static instr load4(reg dest, reg src)
-    {
-        return load(dest, src, 2);
-    }
-
     word_t storage;
 };
 
@@ -248,36 +253,69 @@ struct cpu
 
 struct system_state
 {
-    system_state(std::span<word_t const> program)
-        : rom{std::make_unique<uint32_t[]>(iomap::k_rom_size/sizeof(word_t))}
-        , ram{std::make_unique<uint32_t[]>(iomap::k_ram_size/sizeof(word_t))}
-    {
-        memset(rom.get(), 0, iomap::k_rom_size);
-        memset(ram.get(), 0, iomap::k_ram_size);
-        assert(program.size() < iomap::k_rom_size/sizeof(word_t));
-        memcpy(rom.get(), program.data(), program.size() * sizeof(word_t));
-    }
+    system_state(std::span<word_t const> program = {});
 
+    void set_rom(std::span<word_t const> program);
+    void set_rom(std::vector<instr> program);
+private:
+    void set_rom(void const * prog, size_t num_bytes);
+
+public:
     void run();
 
     void execute_set(reg dest, word_t value);
-    void execute_store(reg addr, reg src, word_t width_sel);
+    void execute_store(reg addr_reg, reg value_reg, word_t width_sel);
+    void execute_load(reg addr_reg, reg value_reg, word_t width_sel);
+
+    void raw_store(word_t addr, word_t value);
+    word_t raw_load(word_t addr);
+
+private:
+    void execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width_sel);
+    void execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width_sel);
+
+public:
     void execute_add(reg dest, reg op1, reg op2);
-    void execute_load(reg dest, reg src, word_t width_sel);
 
     std::vector<uint8_t> console;
-    std::unique_ptr<word_t[]> rom;
-    std::unique_ptr<word_t[]> ram;
+    std::unique_ptr<uint8_t[]> rom;
+    std::unique_ptr<uint8_t[]> ram;
     cpu cpu;
 };
 
+system_state::system_state(std::span<word_t const> program)
+    : rom{std::make_unique<uint8_t[]>(iomap::k_rom_size/sizeof(word_t))}
+    , ram{std::make_unique<uint8_t[]>(iomap::k_ram_size/sizeof(word_t))}
+{
+    memset(rom.get(), 0, iomap::k_rom_size);
+    memset(ram.get(), 0, iomap::k_ram_size);
+    set_rom(program);
+}
+
+void system_state::set_rom(std::span<word_t const> program)
+{
+    set_rom(static_cast<void const *>(program.data()), program.size() * sizeof(word_t));
+}
+
+void system_state::set_rom(std::vector<instr> program)
+{
+    set_rom(static_cast<void const *>(program.data()), program.size() * sizeof(word_t));
+}
+
+void system_state::set_rom(void const * prog, size_t num_bytes)
+{
+    assert(num_bytes < iomap::k_rom_size);
+    memcpy(rom.get(), prog, num_bytes);
+}
+
 void system_state::run()
 {
-    word_t * instr_ptr = rom.get();
+    word_t instr_ptr = iomap::k_rom_base;
 
     while (true) {
-        assert(instr_ptr < rom.get() + iomap::k_rom_size);
-        instr instr{*instr_ptr++};
+        assert(instr_ptr - iomap::k_rom_base < iomap::k_rom_size);
+        instr instr{raw_load(instr_ptr)};
+        instr_ptr += k_word_size;
         printf("execute opcode %s\n", to_str(instr.get_opcode()));
         switch (instr.get_opcode()) {
         case opcode::set: {
@@ -294,6 +332,14 @@ void system_state::run()
             execute_store(addr, src, width_sel);
             break;
         }
+        case opcode::load: {
+            reg dest, addr;
+            word_t width_sel;
+            instr.decode_load(&dest, &addr, &width_sel);
+            printf("execute load r%d = *r%d (0x%x)\n", (unsigned)dest, (unsigned)addr, cpu.get(addr));
+            execute_load(addr, dest, width_sel);
+            break;
+        }
         case opcode::add: {
             reg dest, op1, op2;
             instr.decode_add(&dest, &op1, &op2);
@@ -302,13 +348,6 @@ void system_state::run()
         }
         case opcode::halt:
             return;
-        case opcode::load: {
-            reg dest, src;
-            word_t width_sel;
-            instr.decode_load(&dest, &src, &width_sel);
-            execute_load(dest, src, width_sel);
-            break;
-        }
         default:
             assert(false && "unknown opcode");
         }
@@ -320,49 +359,71 @@ void system_state::execute_set(reg dest, word_t value)
     cpu.get(dest) = value;
 }
 
-void system_state::execute_store(reg addr, reg src, word_t width_sel)
+void system_state::execute_store(reg addr_reg, reg value_reg, word_t width_sel)
 {
-    word_t dest_addr = cpu.get(addr);
-    if (width_sel == 0) {
-        if (dest_addr == iomap::k_console_write) {
-            console.push_back(static_cast<uint8_t>(cpu.get(src)));
-        } else {
-            assert(false && "unhandled addr");
-        }
-    } else if (width_sel == 2) {
-        assert((dest_addr % k_word_size) == 0);
-        if (dest_addr >= iomap::k_ram_base && dest_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
-            *(ram.get() + (dest_addr - iomap::k_ram_base)/k_word_size) = cpu.get(src);
-        }
+    execute_load_store(false, addr_reg, value_reg, width_sel);
+}
+
+void system_state::execute_load(reg addr_reg, reg value_reg, word_t width_sel)
+{
+    execute_load_store(true, addr_reg, value_reg, width_sel);
+}
+
+void system_state::raw_store(word_t addr, word_t value)
+{
+    execute_load_store_impl(false, addr, &value, 2);
+}
+
+word_t system_state::raw_load(word_t addr)
+{
+    word_t tmp;
+    execute_load_store_impl(true, addr, &tmp, 2);
+    return tmp;
+}
+
+void system_state::execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width_sel)
+{
+    word_t addr = cpu.get(addr_reg);
+    word_t * value = &cpu.get(value_reg);
+    execute_load_store_impl(is_load, addr, value, width_sel);
+}
+
+void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width_sel)
+{
+    word_t access_size = width_sel == 2 ? 4 : width_sel == 1 ? 2 : 1;
+    assert(addr % access_size == 0);
+
+    // console hardware special case
+    if (addr >= iomap::k_console_base && addr <= iomap::k_console_base + iomap::k_console_size - access_size) {
+        assert(access_size == 1 && is_load == false && addr == iomap::k_console_write);
+        console.push_back(static_cast<uint8_t>(*value));
+        return;
+    }
+
+    printf("execute_load_store_impl is_load=%d addr=0x%x access_size=%d\n", is_load,
+           addr, access_size);
+
+    uint8_t * mem_addr;
+    if (addr >= iomap::k_ram_base && addr <= iomap::k_ram_base + iomap::k_ram_size - access_size) {
+        mem_addr = ram.get() + (addr - iomap::k_ram_base);
+    } else if (addr >= iomap::k_rom_base && addr <= iomap::k_rom_base + iomap::k_rom_size - access_size) {
+        assert(is_load); // no writes to ROM
+        mem_addr = rom.get() + (addr - iomap::k_rom_base);
     } else {
-        assert(false && "unhandled width_sel");
+        assert(false);
+    }
+
+    // TODO: endian correctness
+    if (is_load) {
+        memcpy(value, mem_addr, access_size);
+    } else {
+        memcpy(mem_addr, value, access_size);
     }
 }
 
 void system_state::execute_add(reg dest, reg op1, reg op2)
 {
     cpu.get(dest) = cpu.get(op1) + cpu.get(op2);
-}
-
-void system_state::execute_load(reg dest, reg src, word_t width_sel)
-{
-    if (width_sel == 2) {
-        word_t src_addr = cpu.get(src);
-        assert(((src_addr % k_word_size) == 0) && "unaligned load");
-
-        word_t val;
-        if (src_addr >= iomap::k_ram_base && src_addr <= iomap::k_ram_base + iomap::k_ram_size - k_word_size) {
-            val = *(ram.get() + (src_addr - iomap::k_ram_base)/k_word_size);
-        } else if (src_addr >= iomap::k_rom_base && src_addr <= iomap::k_rom_base + iomap::k_rom_size - k_word_size) {
-            val = *(rom.get() + (src_addr - iomap::k_rom_base)/k_word_size);
-        } else {
-            assert(false && "unhandled load addr");
-        }
-        printf("load r%d = %d\n", raw(dest), val);
-        cpu.get(dest) = val;
-    } else {
-        assert(false && "unhandled width_sel");
-    }
 }
 
 static void test_enc_dec_set()
@@ -383,6 +444,73 @@ static void test_enc_dec_add()
     assert(dest == r1);
     assert(op1 == r2);
     assert(op2 == r3);
+}
+
+static void test_enc_dec_load_store()
+{
+    for (word_t width_sel : {0, 1, 2}) {
+        instr ii = instr::load(r4, r3, width_sel);
+        reg addr, src;
+        word_t width_sel_out;
+        ii.decode_load(&addr, &src, &width_sel_out);
+        assert(addr == r4);
+        assert(src == r3);
+        assert(width_sel_out == width_sel);
+
+        ii = instr::store(r5, r6, width_sel);
+        ii.decode_store(&addr, &src, &width_sel_out);
+        assert(addr == r5);
+        assert(src == r6);
+        assert(width_sel_out == width_sel);
+    }
+}
+
+static void test_load_store()
+{
+    // 4-byte read/write from RAM
+    {
+        word_t const val = 2348976123;
+        system_state state{};
+        state.cpu.get(r0) = iomap::k_ram_base;
+        state.cpu.get(r1) = val;
+        state.set_rom({
+                instr::store4(r0, r1),
+                instr::load4(r2, r0),
+                instr::halt(),
+            });
+        state.run();
+        assert(state.cpu.get(r2) == val);
+    }
+
+    // 2-byte read/write from RAM
+    {
+        word_t const val = 7287;
+        system_state state{};
+        state.cpu.get(r0) = iomap::k_ram_base + 2;
+        state.cpu.get(r1) = val;
+        state.set_rom({
+                instr::store2(r0, r1),
+                instr::load2(r2, r0),
+                instr::halt(),
+            });
+        state.run();
+        assert(state.cpu.get(r2) == val);
+    }
+
+    // 1-byte read/write from RAM
+    {
+        word_t const val = 209;
+        system_state state{};
+        state.cpu.get(r0) = iomap::k_ram_base + 1;
+        state.cpu.get(r1) = val;
+        state.set_rom({
+                instr::store1(r0, r1),
+                instr::load1(r2, r0),
+                instr::halt(),
+            });
+        state.run();
+        assert(state.cpu.get(r2) == val);
+    }
 }
 
 // hello world program
@@ -419,6 +547,7 @@ static std::vector<word_t> make_add_numbers_rom()
 
     // r0 <- k_rom_base + k_nums_offset
     size_t i_instr = 0;
+    printf("set addr %d\n", iomap::k_rom_base + k_nums_offset);
     rom[i_instr++] = instr::set(r0, iomap::k_rom_base + k_nums_offset).storage;
 
     // r1 <- *r0     ;; r1 holds 42
@@ -450,15 +579,17 @@ static void test_add_numbers_rom()
 {
     system_state system{make_add_numbers_rom()};
     system.run();
-    assert(*system.ram.get() == 42 + 43);
+    assert(system.raw_load(iomap::k_ram_base) == 42 + 43);
 }
 
 static void run_tests()
 {
     test_enc_dec_set();
     test_enc_dec_add();
+    test_enc_dec_load_store();
     test_hello_world_rom();
     test_add_numbers_rom();
+    test_load_store();
 }
 
 enum class command
