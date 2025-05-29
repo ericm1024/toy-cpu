@@ -4,7 +4,6 @@
 // * assembler
 // * mov instruction with immediate encoding
 // * IWYU
-// * code coverage
 
 int main()
 {
