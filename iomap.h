@@ -18,4 +18,4 @@ namespace iomap
     // Ram
     static word_t constexpr k_ram_base = k_page_size * 6;
     static word_t constexpr k_ram_size = k_page_size;
-};
+}; // namespace iomap

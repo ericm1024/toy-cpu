@@ -6,14 +6,14 @@ void register_test(char const *, test_func_t);
 
 void run_tests();
 
-#define PASTE_IMPL(x, y) x ## y
+#define PASTE_IMPL(x, y) x##y
 
 #define PASTE(x, y) PASTE_IMPL(x, y)
 
-#define TEST(name)                                                      \
-    static void PASTE(test_, __LINE__)();                               \
-    __attribute__ ((constructor)) static void PASTE(insert_test_, __LINE__)() \
-    {                                                                   \
-        register_test(name, &PASTE(test_, __LINE__));                   \
-    }                                                                   \
+#define TEST(name)                                                                                 \
+    static void PASTE(test_, __LINE__)();                                                          \
+    __attribute__((constructor)) static void PASTE(insert_test_, __LINE__)()                       \
+    {                                                                                              \
+        register_test(name, &PASTE(test_, __LINE__));                                              \
+    }                                                                                              \
     static void PASTE(test_, __LINE__)()

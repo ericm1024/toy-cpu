@@ -4,8 +4,8 @@
 #include "opcode.h"
 #include "reg.h"
 
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
 
 static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 
@@ -33,7 +33,7 @@ struct instr
     static instr set(reg dest, word_t value)
     {
         assert(value < (1U << (k_instr_bits - k_opcode_bits - k_reg_bits)));
-        return {opcode::set, raw(dest) | (value << k_reg_bits) };
+        return {opcode::set, raw(dest) | (value << k_reg_bits)};
     }
 
     void decode_set(reg * dest, word_t * value) const
@@ -45,13 +45,12 @@ struct instr
     }
 
 private:
-    static instr load_store(opcode op, reg addr, reg src,
-                            word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    static instr
+    load_store(opcode op, reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
     {
         assert(op == opcode::load || op == opcode::store);
         assert(width_sel < 3);
-        return {op, raw(addr) | raw(src) << (k_reg_bits) |
-                width_sel << (2 * k_reg_bits) };
+        return {op, raw(addr) | raw(src) << (k_reg_bits) | width_sel << (2 * k_reg_bits)};
     }
 
     void decode_load_store(reg * addr, reg * src, word_t * width_sel) const
@@ -66,8 +65,7 @@ private:
     }
 
 public:
-    static instr store(reg addr, reg src,
-                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    static instr store(reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
     {
         return load_store(opcode::store, addr, src, width_sel);
     }
@@ -93,8 +91,7 @@ public:
         return store(addr, src, 2);
     }
 
-    static instr load(reg addr, reg src,
-                       word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    static instr load(reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
     {
         return load_store(opcode::load, addr, src, width_sel);
     }

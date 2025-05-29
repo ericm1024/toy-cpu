@@ -3,13 +3,13 @@
 #include <iterator>
 
 static char const * const opcode_to_str[] = {
-#define MAKE_ENTRY(op) [raw(opcode::op)] = #op,
+#define MAKE_ENTRY(op) [raw(opcode::op)] = #op
 
-    MAKE_ENTRY(set)
-    MAKE_ENTRY(store)
-    MAKE_ENTRY(add)
-    MAKE_ENTRY(halt)
-    MAKE_ENTRY(load)
+    MAKE_ENTRY(set),
+    MAKE_ENTRY(store),
+    MAKE_ENTRY(add),
+    MAKE_ENTRY(halt),
+    MAKE_ENTRY(load),
 };
 
 char const * to_str(opcode op)

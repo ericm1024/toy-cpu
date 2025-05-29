@@ -2,8 +2,8 @@
 
 #include "cpu_base.h"
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 // instruction opcodes
 enum class opcode : uint8_t

@@ -1,0 +1,36 @@
+BasedOnStyle: WebKit
+Language: Cpp
+
+AccessModifierOffset: -4
+IndentWidth: 4
+BreakBeforeBraces: Custom
+BraceWrapping:
+#  AfterCaseLabel: false
+  AfterClass: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+#  AfterUnion: true
+#  BeforeElse: false
+#  SplitEmptyFunction: false
+#  SplitEmptyRecord: false
+#  AfterExternBlock: true
+#  AfterControlStatement: true
+#  IndentBraces: false
+
+ColumnLimit: 100
+CompactNamespaces: false
+DerivePointerAlignment: false
+FixNamespaceComments: true
+NamespaceIndentation: All
+PointerAlignment: Middle
+AllowShortFunctionsOnASingleLine: None
+BreakConstructorInitializers: BeforeComma
+PenaltyReturnTypeOnItsOwnLine: 0
+Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: false
+AllowAllArgumentsOnNextLine: false
+BinPackArguments: false
+AlignOperands: Align
+AlignAfterOpenBracket: Align

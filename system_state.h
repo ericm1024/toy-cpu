@@ -24,6 +24,7 @@ struct system_state
 
     void set_rom(std::span<word_t const> program);
     void set_rom(std::vector<instr> program);
+
 private:
     void set_rom(void const * prog, size_t num_bytes);
 

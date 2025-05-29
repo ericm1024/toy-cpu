@@ -2,7 +2,6 @@
 
 // TODOs:
 // * assembler
-// * makefile
 // * asan
 // * mov instruction with immediate encoding
 // * IWYU

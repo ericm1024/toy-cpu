@@ -34,8 +34,8 @@ static std::vector<word_t> make_add_numbers_rom()
     rom.resize(128);
 
     word_t const k_nums_offset = 64 * k_word_size;
-    rom[k_nums_offset/k_word_size] = 42;
-    rom[k_nums_offset/k_word_size + 1] = 43;
+    rom[k_nums_offset / k_word_size] = 42;
+    rom[k_nums_offset / k_word_size + 1] = 43;
 
     // r0 <- k_rom_base + k_nums_offset
     size_t i_instr = 0;
