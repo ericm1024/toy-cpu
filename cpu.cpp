@@ -1,11 +1,12 @@
 #include "test.h"
 
 // TODOs:
-// * better test coverage
 // * assembler
 // * makefile
 // * asan
 // * mov instruction with immediate encoding
+// * IWYU
+// * code coverage
 
 int main()
 {
