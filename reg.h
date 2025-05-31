@@ -3,6 +3,8 @@
 #include "cpu_base.h"
 
 #include <cstddef>
+#include <optional>
+#include <string_view>
 
 // 16 architectural registers
 enum class reg : uint8_t
@@ -34,3 +36,7 @@ static constexpr word_t raw(reg r)
 {
     return static_cast<word_t>(r);
 }
+
+template <typename T> std::optional<T> from_str(std::string_view str);
+
+template <> std::optional<reg> from_str<reg>(std::string_view str);

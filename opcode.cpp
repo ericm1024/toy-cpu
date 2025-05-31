@@ -1,9 +1,14 @@
 #include "opcode.h"
 
 #include <iterator>
+#include <string_view>
 
-static char const * const opcode_to_str[] = {
-#define MAKE_ENTRY(op) [raw(opcode::op)] = #op
+static std::string_view const opcode_to_str[] = {
+#define MAKE_ENTRY(op)                                                                             \
+    [raw(opcode::op)] = std::string_view                                                           \
+    {                                                                                              \
+        #op                                                                                        \
+    }
 
     MAKE_ENTRY(set),
     MAKE_ENTRY(store),
@@ -18,5 +23,5 @@ char const * to_str(opcode op)
     if (index >= std::size(opcode_to_str)) {
         return "unknown";
     }
-    return opcode_to_str[index];
+    return opcode_to_str[index].data();
 }
