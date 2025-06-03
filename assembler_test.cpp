@@ -34,6 +34,19 @@ TEST("assembler.blank_lines")
     do_test("\nset r1 100\n\n\nset r2 42", {instr::set(r1, 100), instr::set(r2, 42)});
 }
 
+TEST("assembler.comments")
+{
+    do_test(R"(
+# a comment
+    # another comment
+
+set r1 100 # a comment after an instruction
+set r2 42
+# yet another
+)",
+            {instr::set(r1, 100), instr::set(r2, 42)});
+}
+
 TEST("assembler.load_store")
 {
     std::pair<char const *, instr (*)(reg, reg, word_t)> const mnemonic_table[] = {

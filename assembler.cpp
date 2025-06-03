@@ -196,8 +196,17 @@ static std::vector<std::string_view> tokenize_line(std::string_view line)
 
         tokens.push_back(token);
     }
-    assert(tokens.size() != 0);
     return tokens;
+}
+
+static bool is_comment(std::string_view token)
+{
+    return token[0] == '#';
+}
+
+static void strip_comments(std::vector<std::string_view> * tokens)
+{
+    tokens->erase(std::find_if(tokens->begin(), tokens->end(), is_comment), tokens->end());
 }
 
 std::vector<uint8_t> assemble(std::string_view program)
@@ -217,13 +226,14 @@ std::vector<uint8_t> assemble(std::string_view program)
 
         std::string_view line = program.substr(start, end - start);
         start = end + 1;
-        if (line.size() == 0) {
-            continue;
-        }
 
         logger.debug("parse line {}", line);
 
         std::vector<std::string_view> tokens = tokenize_line(line);
+        strip_comments(&tokens);
+        if (tokens.size() == 0) {
+            continue;
+        }
         instr_assembler assembler{tokens, &rom};
         assembler.assemble();
     }
