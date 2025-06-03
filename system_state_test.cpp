@@ -168,3 +168,21 @@ halt
     state.run();
     assert(state.cpu.get(r0) == 5);
 }
+
+TEST("system_state.execute.fib")
+{
+    char const * prog = R"(
+set r1 5
+set r2 1
+set r0 0
+add r0 r0 r2
+compare r0 r1
+branch.ne -8
+halt
+)";
+    std::vector<uint8_t> rom = assemble(prog);
+    system_state state{};
+    state.set_rom(rom);
+    state.run();
+    assert(state.cpu.get(r0) == 5);
+}

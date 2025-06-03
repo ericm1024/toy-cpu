@@ -6,6 +6,49 @@
 
 static logger logger;
 
+void cpu::branch(instr::cmp_flag flag, signed_word_t offset)
+{
+    if (is_taken(flag)) {
+        instr_ptr += offset;
+        // back one instruction so the increment at the end of execution takes us to the right
+        // place.
+        instr_ptr -= k_word_size;
+    }
+}
+
+void cpu::jump(instr::cmp_flag flag, reg loc)
+{
+    if (is_taken(flag)) {
+        instr_ptr += get(loc);
+        // back one instruction so the increment at the end of execution takes us to the right
+        // place.
+        instr_ptr -= k_word_size;
+    }
+}
+
+bool cpu::is_taken(instr::cmp_flag flag) const
+{
+    switch (flag) {
+    case instr::eq:
+        return get_cmp_flag(cpu_cmp_flags::eq);
+    case instr::ne:
+        return !get_cmp_flag(cpu_cmp_flags::eq);
+    case instr::gt:
+        return get_cmp_flag(cpu_cmp_flags::gt);
+    case instr::ge:
+        return get_cmp_flag(cpu_cmp_flags::gt) || get_cmp_flag(cpu_cmp_flags::eq);
+    case instr::lt:
+        return get_cmp_flag(cpu_cmp_flags::lt);
+    case instr::le:
+        return get_cmp_flag(cpu_cmp_flags::lt) || get_cmp_flag(cpu_cmp_flags::eq);
+    case instr::unc:
+        return true;
+    default:
+        assert(false);
+        return false;
+    }
+}
+
 system_state::system_state(std::span<word_t const> program)
     : rom{std::make_unique<uint8_t[]>(iomap::k_rom_size)}
     , ram{std::make_unique<uint8_t[]>(iomap::k_ram_size)}
@@ -79,10 +122,17 @@ void system_state::run()
             break;
         }
         case opcode::branch: {
-            instr::cmp_flag flags;
+            instr::cmp_flag flag;
             signed_word_t offset;
-            instr.decode_branch(&flags, &offset);
-            execute_branch(flags, offset);
+            instr.decode_branch(&flag, &offset);
+            cpu.branch(flag, offset);
+            break;
+        }
+        case opcode::jump: {
+            instr::cmp_flag flag;
+            reg loc;
+            instr.decode_jump(&flag, &loc);
+            cpu.jump(flag, loc);
             break;
         }
         default:
@@ -173,41 +223,5 @@ void system_state::execute_compare(reg op1, reg op2)
         cpu.set_cmp_flag(cpu_cmp_flags::lt);
     } else {
         cpu.set_cmp_flag(cpu_cmp_flags::gt);
-    }
-}
-
-void system_state::execute_branch(instr::cmp_flag flags, signed_word_t offset)
-{
-    assert(!cpu.get_cmp_flag(cpu_cmp_flags::invalid));
-
-    bool taken = false;
-    switch (flags) {
-    case instr::eq:
-        taken = cpu.get_cmp_flag(cpu_cmp_flags::eq);
-        break;
-    case instr::ne:
-        taken = !cpu.get_cmp_flag(cpu_cmp_flags::eq);
-        break;
-    case instr::gt:
-        taken = cpu.get_cmp_flag(cpu_cmp_flags::gt);
-        break;
-    case instr::ge:
-        taken = cpu.get_cmp_flag(cpu_cmp_flags::gt) || cpu.get_cmp_flag(cpu_cmp_flags::eq);
-        break;
-    case instr::lt:
-        taken = cpu.get_cmp_flag(cpu_cmp_flags::lt);
-        break;
-    case instr::le:
-        taken = cpu.get_cmp_flag(cpu_cmp_flags::lt) || cpu.get_cmp_flag(cpu_cmp_flags::eq);
-        break;
-    default:
-        assert(false);
-    }
-
-    if (taken) {
-        cpu.instr_ptr += offset;
-        // back one instruction so the increment at the end of execution takes us to the right
-        // place.
-        cpu.instr_ptr -= k_word_size;
     }
 }

@@ -182,8 +182,11 @@ public:
         ge,
         lt,
         le,
+        unc,
     };
     using enum cmp_flag;
+
+    static std::initializer_list<cmp_flag> const k_all_cmp_flags;
 
     static size_t constexpr k_cmp_flag_bits = 4;
 
@@ -222,6 +225,20 @@ public:
               * k_word_size;
     }
 
+    static instr jump(cmp_flag flag, reg loc)
+    {
+        return {opcode::jump, static_cast<word_t>(flag) | raw(loc) << k_cmp_flag_bits};
+    }
+
+    void decode_jump(cmp_flag * flag, reg * loc) const
+    {
+        assert(get_opcode() == opcode::jump);
+        word_t tmp = storage >> k_opcode_bits;
+        *flag = static_cast<cmp_flag>(tmp & ((1U << k_cmp_flag_bits) - 1));
+        tmp >>= k_cmp_flag_bits;
+        *loc = static_cast<reg>(tmp & k_reg_mask);
+    }
+
     word_t storage;
 };
 
@@ -250,5 +267,21 @@ struct std::formatter<instr>
             *it++ = c;
         }
         return it;
+    }
+};
+
+template <>
+struct std::formatter<instr::cmp_flag>
+{
+    template <class ParseContext>
+    constexpr std::format_parse_context::iterator parse(ParseContext & ctx)
+    {
+        return ctx.begin();
+    }
+
+    template <class FormatContext>
+    auto format(instr::cmp_flag const & flag, FormatContext & ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", to_str(flag));
     }
 };

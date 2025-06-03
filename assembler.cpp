@@ -60,6 +60,14 @@ private:
         assemble_branch(flag);
     }
 
+    void assemble_jump(instr::cmp_flag flag);
+
+    template <instr::cmp_flag flag>
+    void assemble_jump()
+    {
+        assemble_jump(flag);
+    }
+
     using assemble_fn = void (instr_assembler::*)();
 
     static inline std::pair<char const *, assemble_fn> dispatch_table[]{
@@ -81,6 +89,16 @@ private:
         {"branch.ge", &instr_assembler::assemble_branch<instr::ge>},
         {"branch.lt", &instr_assembler::assemble_branch<instr::lt>},
         {"branch.le", &instr_assembler::assemble_branch<instr::le>},
+        {"branch", &instr_assembler::assemble_branch<instr::unc>},
+        {"branch.unc", &instr_assembler::assemble_branch<instr::unc>},
+        {"jump.eq", &instr_assembler::assemble_jump<instr::eq>},
+        {"jump.ne", &instr_assembler::assemble_jump<instr::ne>},
+        {"jump.gt", &instr_assembler::assemble_jump<instr::gt>},
+        {"jump.ge", &instr_assembler::assemble_jump<instr::ge>},
+        {"jump.lt", &instr_assembler::assemble_jump<instr::lt>},
+        {"jump.le", &instr_assembler::assemble_jump<instr::le>},
+        {"jump", &instr_assembler::assemble_jump<instr::unc>},
+        {"jump.unc", &instr_assembler::assemble_jump<instr::unc>},
     };
 
     std::span<std::string_view> tokens_;
@@ -183,6 +201,16 @@ void instr_assembler::assemble_branch(instr::cmp_flag flag)
     }
     assert(instr::k_branch_min_offset <= offset && offset <= instr::k_branch_max_offset);
     push_instr(instr::branch(flag, offset));
+}
+
+void instr_assembler::assemble_jump(instr::cmp_flag flag)
+{
+    assert(tokens_.size() == 1);
+
+    std::optional<reg> loc = from_str<reg>(tokens_[0]);
+    assert(loc.has_value());
+
+    push_instr(instr::jump(flag, *loc));
 }
 
 static std::vector<std::string_view> tokenize_line(std::string_view line)

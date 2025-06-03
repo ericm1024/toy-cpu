@@ -1,3 +1,4 @@
+#include "assembler.h"
 #include "instr.h"
 #include "iomap.h"
 #include "system_state.h"
@@ -71,4 +72,38 @@ TEST("full_program.add_numbers")
     system_state system{make_add_numbers_rom()};
     system.run();
     assert(system.raw_load(iomap::k_ram_base) == 42 + 43);
+}
+
+static std::vector<uint8_t> make_fib_rom()
+{
+/*
+int fib(int x)
+{
+    if (x <= 1) {
+        return 1;
+    }
+    return fib(x - 1) + fib(x - 2);
+*/
+
+    std::string prog = std::format(R"(
+
+    # initialize stack pointer to k_ram_base
+    set r0 {}
+
+# stack pointer is in r0, return value is in r1, argument is in r2
+fib:
+    set r3 1
+    compare r2 r3
+    branch.gt recurse # r2 > 1, recurse
+
+recurse:
+
+)", iomap::k_ram_base);
+
+    return assemble(prog);
+}
+
+TEST("full_program.fib")
+{
+    std::vector<uint8_t> fib_rom = make_fib_rom();
 }

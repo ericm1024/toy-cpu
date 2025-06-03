@@ -13,6 +13,17 @@ static std::string_view const cmp_flag_to_str[] = {
     MAKE_ENTRY(ge),
     MAKE_ENTRY(lt),
     MAKE_ENTRY(le),
+    MAKE_ENTRY(unc),
+};
+
+std::initializer_list<instr::cmp_flag> const instr::k_all_cmp_flags{
+    instr::eq,
+    instr::ne,
+    instr::gt,
+    instr::ge,
+    instr::lt,
+    instr::le,
+    instr::unc,
 };
 
 std::string_view to_str(instr::cmp_flag flag)
@@ -62,6 +73,12 @@ std::string to_str(instr const & ii)
         signed_word_t relative_offset;
         ii.decode_branch(&flag, &relative_offset);
         return std::format("branch.{} {}", to_str(flag), relative_offset);
+    }
+    case opcode::jump: {
+        instr::cmp_flag flag;
+        reg loc;
+        ii.decode_jump(&flag, &loc);
+        return std::format("jump.{} {}", flag, loc);
     }
     default:
         return "unknown";

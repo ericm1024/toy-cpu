@@ -79,8 +79,7 @@ TEST("instr.compare")
 
 TEST("instr.branch")
 {
-    for (instr::cmp_flag flag :
-         {instr::eq, instr::ne, instr::gt, instr::ge, instr::lt, instr::le}) {
+    for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
         for (signed_word_t offset :
              {instr::k_branch_min_offset, -4, 0, 4, instr::k_branch_max_offset}) {
             instr ii = instr::branch(flag, offset);
@@ -90,6 +89,21 @@ TEST("instr.branch")
 
             assert(flag_out == flag);
             assert(offset_out == offset);
+        }
+    }
+}
+
+TEST("instr.jump")
+{
+    for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+        for (reg rr : k_all_registers) {
+
+            instr ii = instr::jump(flag, rr);
+            instr::cmp_flag flag_out;
+            reg rr_out;
+            ii.decode_jump(&flag_out, &rr_out);
+            assert(flag_out == flag);
+            assert(rr_out == rr);
         }
     }
 }

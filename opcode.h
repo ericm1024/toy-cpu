@@ -17,6 +17,7 @@ enum class opcode : uint8_t
     halt,
     compare,
     branch,
+    jump,
 };
 
 static constexpr word_t raw(opcode op)

@@ -125,25 +125,35 @@ TEST("assembler.cmp")
     }
 }
 
+static void test_branch(signed_word_t offset, instr::cmp_flag flag, bool adorn = true)
+{
+    std::stringstream ss;
+    ss << "branch";
+    if (adorn) {
+        ss << ".";
+        ss << to_str(flag);
+    }
+
+    ss << " ";
+    ss << offset;
+
+    do_test(ss.str(), {instr::branch(flag, offset)});
+}
+
 TEST("assembler.branch")
 {
-    for (instr::cmp_flag flag :
-         {instr::eq, instr::ne, instr::gt, instr::ge, instr::lt, instr::le}) {
-        for (signed_word_t offset :
+    for (signed_word_t offset :
              {instr::k_branch_min_offset, -4, 0, 4, instr::k_branch_max_offset}) {
-            std::stringstream ss;
-            ss << "branch.";
-            ss << to_str(flag);
-
-            ss << " ";
-            ss << offset;
-
-            do_test(ss.str(), {instr::branch(flag, offset)});
+        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+            test_branch(offset, flag);
         }
+
+        // test unadored unconditional branch
+        test_branch(offset, instr::unc, false /* !adorn */);
     }
 }
 
-TEST("assembler.jump_labels")
+TEST("assembler.branch.labels")
 {
     // forward label
     do_test(
@@ -163,4 +173,31 @@ compare r0 r1
 branch.eq label
 )",
             {instr::compare(r0, r1), instr::branch(instr::eq, -4)});
+}
+
+static void test_jump(reg loc, instr::cmp_flag flag, bool adorn = true)
+{
+    std::stringstream ss;
+    ss << "jump";
+    if (adorn) {
+        ss << ".";
+        ss << to_str(flag);
+    }
+
+    ss << " ";
+    ss << to_str(loc);
+
+    do_test(ss.str(), {instr::jump(flag, loc)});
+}
+
+TEST("assembler.jump")
+{
+    for (reg loc : k_all_registers) {
+        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+            test_jump(loc, flag);
+        }
+
+        // test unadored unconditional jump
+        test_jump(loc, instr::unc, false /* !adorn */);
+    }
 }

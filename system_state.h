@@ -35,11 +35,18 @@ struct cpu
         cpu_cmp_flags = 1 << static_cast<uint8_t>(flag);
     }
 
-    bool get_cmp_flag(cpu_cmp_flags flag)
+    bool get_cmp_flag(cpu_cmp_flags flag) const
     {
         return cpu_cmp_flags & (1 << static_cast<uint8_t>(flag));
     }
 
+    void branch(instr::cmp_flag flag, signed_word_t offset);
+    void jump(instr::cmp_flag flag, reg loc);
+
+private:
+    bool is_taken(instr::cmp_flag flag) const;
+
+public:
     uint8_t cpu_cmp_flags;
     word_t instr_ptr = iomap::k_rom_base;
     word_t registers[raw(reg::num_registers)]{};
@@ -73,7 +80,6 @@ private:
 public:
     void execute_add(reg dest, reg op1, reg op2);
     void execute_compare(reg op1, reg op2);
-    void execute_branch(instr::cmp_flag flags, signed_word_t offset);
 
     std::vector<uint8_t> console;
     std::unique_ptr<uint8_t[]> rom;
