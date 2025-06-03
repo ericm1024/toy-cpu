@@ -45,76 +45,94 @@ struct instr
     }
 
 private:
-    static instr
-    load_store(opcode op, reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    enum class width_sel : uint8_t
     {
-        assert(op == opcode::load || op == opcode::store);
-        assert(width_sel < 3);
-        return {op, raw(addr) | raw(src) << (k_reg_bits) | width_sel << (2 * k_reg_bits)};
+    };
+
+    static word_t sel_to_width(width_sel width_sel)
+    {
+        uint8_t raw = static_cast<uint8_t>(width_sel);
+        assert(raw < 3);
+        return raw == 0 ? 1 : raw == 1 ? 2 : 4;
     }
 
-    void decode_load_store(reg * addr, reg * src, word_t * width_sel) const
+    static width_sel width_to_sel(word_t width)
+    {
+        assert(width == 1 || width == 2 || width == 4);
+        return static_cast<width_sel>(width == 1 ? 0 : width == 2 ? 1 : 2);
+    }
+
+    static instr load_store(opcode op, reg addr, reg src, word_t width)
+    {
+        assert(op == opcode::load || op == opcode::store);
+        width_sel sel = width_to_sel(width);
+        return {op,
+                raw(addr) | raw(src) << (k_reg_bits)
+                    | static_cast<word_t>(sel) << (2 * k_reg_bits)};
+    }
+
+    void decode_load_store(reg * addr, reg * src, word_t * width) const
     {
         word_t tmp = storage >> k_opcode_bits;
         *addr = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
         *src = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
-        *width_sel = tmp & 0x3;
-        assert(*width_sel < 3);
+        uint8_t raw_width_sel = tmp & 0x3;
+        *width = sel_to_width(width_sel{raw_width_sel});
     }
 
 public:
-    static instr store(reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    static instr store(reg addr, reg src, word_t width)
     {
-        return load_store(opcode::store, addr, src, width_sel);
+        return load_store(opcode::store, addr, src, width);
     }
 
-    void decode_store(reg * addr, reg * src, word_t * width_sel) const
+    void decode_store(reg * addr, reg * src, word_t * width) const
     {
         assert(get_opcode() == opcode::store);
-        decode_load_store(addr, src, width_sel);
+        decode_load_store(addr, src, width);
     }
 
     static instr store1(reg addr, reg src)
     {
-        return store(addr, src, 0);
+        return store(addr, src, 1);
     }
 
     static instr store2(reg addr, reg src)
     {
-        return store(addr, src, 1);
+        return store(addr, src, 2);
     }
 
     static instr store4(reg addr, reg src)
     {
-        return store(addr, src, 2);
+        return store(addr, src, 4);
     }
 
-    static instr load(reg addr, reg src, word_t width_sel /* 0, 1, 2 -> 1, 2, 4 bits*/)
+    static instr load(reg addr, reg src, word_t width)
     {
-        return load_store(opcode::load, addr, src, width_sel);
+        return load_store(opcode::load, addr, src, width);
     }
 
-    void decode_load(reg * dest, reg * src, word_t * width_sel) const
+    void decode_load(reg * dest, reg * src, word_t * width) const
     {
         assert(get_opcode() == opcode::load);
-        decode_load_store(dest, src, width_sel);
+        decode_load_store(dest, src, width);
     }
 
     static instr load1(reg dest, reg src)
     {
-        return load(dest, src, 0);
+        return load(dest, src, 1);
     }
 
     static instr load2(reg dest, reg src)
     {
-        return load(dest, src, 1);
+        return load(dest, src, 2);
     }
 
     static instr load4(reg dest, reg src)
     {
-        return load(dest, src, 2);
+        return load(dest, src, 4);
     }
 
     static instr add(reg dest, reg op1, reg op2)

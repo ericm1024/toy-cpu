@@ -26,19 +26,19 @@ TEST("instr.enc_dec_add")
 
 TEST("instr.enc_dec_load_store")
 {
-    for (word_t width_sel : {0, 1, 2}) {
-        instr ii = instr::load(r4, r3, width_sel);
+    for (word_t width : {1, 2, 4}) {
+        instr ii = instr::load(r4, r3, width);
         reg addr, src;
-        word_t width_sel_out;
-        ii.decode_load(&addr, &src, &width_sel_out);
+        word_t width_out;
+        ii.decode_load(&addr, &src, &width_out);
         assert(addr == r4);
         assert(src == r3);
-        assert(width_sel_out == width_sel);
+        assert(width_out == width);
 
-        ii = instr::store(r5, r6, width_sel);
-        ii.decode_store(&addr, &src, &width_sel_out);
+        ii = instr::store(r5, r6, width);
+        ii.decode_store(&addr, &src, &width_out);
         assert(addr == r5);
         assert(src == r6);
-        assert(width_sel_out == width_sel);
+        assert(width_out == width);
     }
 }

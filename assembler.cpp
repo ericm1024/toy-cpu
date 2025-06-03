@@ -12,8 +12,7 @@ struct instr_assembler
     instr_assembler(std::span<std::string_view> tokens, std::vector<uint8_t> * rom)
         : tokens_{tokens}
         , rom_{rom}
-    {
-    }
+    { }
 
     void assemble();
 
@@ -22,15 +21,12 @@ private:
 
     void assemble_set();
 
-    void assemble_load_store(word_t width_sel, bool is_load);
+    void assemble_load_store(word_t width, bool is_load);
 
-    template <word_t access_width, bool is_load>
+    template <word_t width, bool is_load>
     void assemble_load_store()
     {
-        static_assert(access_width == 1 || access_width == 2 || access_width == 4);
-
-        word_t width_sel = access_width == 4 ? 2 : access_width == 2 ? 1 : 0;
-        assemble_load_store(width_sel, is_load);
+        assemble_load_store(width, is_load);
     }
 
     void assemble_add();
@@ -91,7 +87,7 @@ void instr_assembler::assemble_set()
     push_instr(instr::set(*dest_reg, value));
 }
 
-void instr_assembler::assemble_load_store(word_t width_sel, bool is_load)
+void instr_assembler::assemble_load_store(word_t width, bool is_load)
 {
     assert(tokens_.size() == 2);
 
@@ -102,7 +98,7 @@ void instr_assembler::assemble_load_store(word_t width_sel, bool is_load)
     assert(rhs_reg.has_value());
 
     auto ctor = is_load ? &instr::load : &instr::store;
-    push_instr(ctor(*lhs_reg, *rhs_reg, width_sel));
+    push_instr(ctor(*lhs_reg, *rhs_reg, width));
 }
 
 void instr_assembler::assemble_add()

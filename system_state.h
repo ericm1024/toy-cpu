@@ -32,15 +32,15 @@ public:
     void run();
 
     void execute_set(reg dest, word_t value);
-    void execute_store(reg addr_reg, reg value_reg, word_t width_sel);
-    void execute_load(reg addr_reg, reg value_reg, word_t width_sel);
+    void execute_store(reg addr_reg, reg value_reg, word_t width);
+    void execute_load(reg addr_reg, reg value_reg, word_t width);
 
     void raw_store(word_t addr, word_t value);
     word_t raw_load(word_t addr);
 
 private:
-    void execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width_sel);
-    void execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width_sel);
+    void execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width);
+    void execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width);
 
 public:
     void execute_add(reg dest, reg op1, reg op2);

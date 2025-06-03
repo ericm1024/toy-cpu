@@ -47,8 +47,7 @@ TEST("assembler.load_store")
                     ss << " ";
                     ss << to_str(dst);
 
-                    word_t width_sel = width == 0 ? 2 : width == 1 ? 0 : width == 2 ? 1 : 2;
-                    instr ii = ctor(src, dst, width_sel);
+                    instr ii = ctor(src, dst, width != 0 ? width : k_word_size);
 
                     std::vector<uint8_t> rom = assemble(ss.str());
                     verify_rom(rom, {ii});

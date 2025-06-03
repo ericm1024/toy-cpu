@@ -47,20 +47,20 @@ void system_state::run()
         }
         case opcode::store: {
             reg addr, src;
-            word_t width_sel;
-            instr.decode_store(&addr, &src, &width_sel);
-            execute_store(addr, src, width_sel);
+            word_t width;
+            instr.decode_store(&addr, &src, &width);
+            execute_store(addr, src, width);
             break;
         }
         case opcode::load: {
             reg dest, addr;
-            word_t width_sel;
-            instr.decode_load(&dest, &addr, &width_sel);
+            word_t width;
+            instr.decode_load(&dest, &addr, &width);
             printf("execute load r%d = *r%d (0x%x)\n",
                    (unsigned)dest,
                    (unsigned)addr,
                    cpu.get(addr));
-            execute_load(addr, dest, width_sel);
+            execute_load(addr, dest, width);
             break;
         }
         case opcode::add: {
@@ -82,59 +82,53 @@ void system_state::execute_set(reg dest, word_t value)
     cpu.get(dest) = value;
 }
 
-void system_state::execute_store(reg addr_reg, reg value_reg, word_t width_sel)
+void system_state::execute_store(reg addr_reg, reg value_reg, word_t width)
 {
-    execute_load_store(false, addr_reg, value_reg, width_sel);
+    execute_load_store(false, addr_reg, value_reg, width);
 }
 
-void system_state::execute_load(reg addr_reg, reg value_reg, word_t width_sel)
+void system_state::execute_load(reg addr_reg, reg value_reg, word_t width)
 {
-    execute_load_store(true, addr_reg, value_reg, width_sel);
+    execute_load_store(true, addr_reg, value_reg, width);
 }
 
 void system_state::raw_store(word_t addr, word_t value)
 {
-    execute_load_store_impl(false, addr, &value, 2);
+    execute_load_store_impl(false, addr, &value, k_word_size);
 }
 
 word_t system_state::raw_load(word_t addr)
 {
     word_t tmp;
-    execute_load_store_impl(true, addr, &tmp, 2);
+    execute_load_store_impl(true, addr, &tmp, k_word_size);
     return tmp;
 }
 
-void system_state::execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width_sel)
+void system_state::execute_load_store(bool is_load, reg addr_reg, reg value_reg, word_t width)
 {
     word_t addr = cpu.get(addr_reg);
     word_t * value = &cpu.get(value_reg);
-    execute_load_store_impl(is_load, addr, value, width_sel);
+    execute_load_store_impl(is_load, addr, value, width);
 }
 
-void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * value,
-                                           word_t width_sel)
+void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width)
 {
-    word_t access_size = width_sel == 2 ? 4 : width_sel == 1 ? 2 : 1;
-    assert(addr % access_size == 0);
+    assert(addr % width == 0);
 
     // console hardware special case
     if (addr >= iomap::k_console_base
-        && addr <= iomap::k_console_base + iomap::k_console_size - access_size) {
-        assert(access_size == 1 && is_load == false && addr == iomap::k_console_write);
+        && addr <= iomap::k_console_base + iomap::k_console_size - width) {
+        assert(width == 1 && is_load == false && addr == iomap::k_console_write);
         console.push_back(static_cast<uint8_t>(*value));
         return;
     }
 
-    printf("execute_load_store_impl is_load=%d addr=0x%x access_size=%d\n",
-           is_load,
-           addr,
-           access_size);
+    printf("execute_load_store_impl is_load=%d addr=0x%x width=%d\n", is_load, addr, width);
 
     uint8_t * mem_addr;
-    if (addr >= iomap::k_ram_base && addr <= iomap::k_ram_base + iomap::k_ram_size - access_size) {
+    if (addr >= iomap::k_ram_base && addr <= iomap::k_ram_base + iomap::k_ram_size - width) {
         mem_addr = ram.get() + (addr - iomap::k_ram_base);
-    } else if (addr >= iomap::k_rom_base
-               && addr <= iomap::k_rom_base + iomap::k_rom_size - access_size) {
+    } else if (addr >= iomap::k_rom_base && addr <= iomap::k_rom_base + iomap::k_rom_size - width) {
         assert(is_load); // no writes to ROM
         mem_addr = rom.get() + (addr - iomap::k_rom_base);
     } else {
@@ -143,9 +137,9 @@ void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * v
 
     // TODO: endian correctness
     if (is_load) {
-        memcpy(value, mem_addr, access_size);
+        memcpy(value, mem_addr, width);
     } else {
-        memcpy(mem_addr, value, access_size);
+        memcpy(mem_addr, value, width);
     }
 }
 
