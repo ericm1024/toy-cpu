@@ -81,3 +81,9 @@ TEST("assembler.add")
         }
     }
 }
+
+TEST("assembler.halt")
+{
+    std::vector<uint8_t> rom = assemble("halt");
+    verify_rom(rom, {instr::halt()});
+}
