@@ -1,23 +1,35 @@
 
 CXX=clang++
-CXXFLAGS=-Wall -Wextra -pedantic -std=c++20 -g -fsanitize=address -fsanitize=undefined -fprofile-instr-generate -fcoverage-mapping
+CXXFLAGS=-Wall -Wextra -pedantic -std=c++20 -g
+COV_FLAGS=-fprofile-instr-generate -fcoverage-mapping
+DBG_FLAGS=-fsanitize=address -fsanitize=undefined
 
 SRCS := $(wildcard *.cpp)
 COV_DIR=$(CURDIR)/cov
+BIN_DIR=$(CURDIR)/bin
 
-cpu: $(SRCS) *.h
-	$(CXX) $(CXXFLAGS) -o $@ $(SRCS)
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(BIN_DIR)/cpu-dbg: $(BIN_DIR) $(SRCS) *.h
+	$(CXX) $(CXXFLAGS) $(DBG_FLAGS) -o $@ $(SRCS)
+
+$(BIN_DIR)/cpu-cov: $(BIN_DIR) $(SRCS) *.h
+	$(CXX) $(CXXFLAGS) $(COV_FLAGS) -o $@ $(SRCS)
 
 .PHONY: tests
-tests: cpu
-	LLVM_PROFILE_FILE=$(COV_DIR)/cpu.profraw ./cpu
+tests: $(BIN_DIR)/cpu-dbg
+	$(BIN_DIR)/cpu-dbg
+
+.PHONY: coverage
+coverage: $(BIN_DIR)/cpu-cov
+	LLVM_PROFILE_FILE=$(COV_DIR)/cpu.profraw $(BIN_DIR)/cpu-cov
 	llvm-profdata merge -sparse $(COV_DIR)/cpu.profraw -o $(COV_DIR)/cpu.profdata
-	llvm-cov show -instr-profile $(COV_DIR)/cpu.profdata -format html -object cpu -output-dir $(COV_DIR) -show-branches count
+	llvm-cov show -instr-profile $(COV_DIR)/cpu.profdata -format html -object $(BIN_DIR)/cpu-cov -output-dir $(COV_DIR) -show-branches count
 
 .PHONY: clean
 clean:
-	rm -rf $(CURDIR)/cpu
-	rm -rf $(CURDIR)/cov
+	rm -rf $(BIN_DIR) $(COV_DIR)
 
 .PHONY: format
 format:
