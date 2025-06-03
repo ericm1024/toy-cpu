@@ -25,7 +25,8 @@ static std::string_view const reg_to_str[] = {
     MAKE_ENTRY(r15),
 };
 
-template <> std::optional<reg> from_str<reg>(std::string_view str)
+template <>
+std::optional<reg> from_str<reg>(std::string_view str)
 {
     for (size_t i = 0; i < std::size(reg_to_str); ++i) {
         if (reg_to_str[i] == str) {
@@ -33,4 +34,13 @@ template <> std::optional<reg> from_str<reg>(std::string_view str)
         }
     }
     return std::nullopt;
+}
+
+std::string_view to_str(reg rr)
+{
+    uint8_t index = raw(rr);
+    if (index >= std::size(reg_to_str)) {
+        return "unknown";
+    }
+    return reg_to_str[index];
 }

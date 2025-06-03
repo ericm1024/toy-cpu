@@ -4,6 +4,7 @@
 #include "test.h"
 
 #include <span>
+#include <sstream>
 #include <vector>
 
 static void verify_rom(std::span<uint8_t const> rom, std::initializer_list<instr> instructions)
@@ -20,4 +21,39 @@ TEST("assembler.basic")
 {
     std::vector<uint8_t> rom = assemble("set r1 100\nset r2 42");
     verify_rom(rom, {instr::set(r1, 100), instr::set(r2, 42)});
+}
+
+TEST("assembler.load_store")
+{
+    std::pair<char const *, instr (*)(reg, reg, word_t)> const mnemonic_table[] = {
+        {"load", &instr::load},
+        {"store", &instr::store},
+    };
+
+    for (auto & [mnemonic, ctor] : mnemonic_table) {
+        for (reg src : {reg::r1, reg::r2}) {
+            for (reg dst : {reg::r3, reg::r4}) {
+                for (word_t width : {0, 1, 2, 4}) {
+                    std::stringstream ss;
+                    ss << mnemonic;
+                    if (width != 0) {
+                        ss << ".";
+                        ss << width;
+                    }
+
+                    ss << " ";
+                    ss << to_str(src);
+
+                    ss << " ";
+                    ss << to_str(dst);
+
+                    word_t width_sel = width == 0 ? 2 : width == 1 ? 0 : width == 2 ? 1 : 2;
+                    instr ii = ctor(src, dst, width_sel);
+
+                    std::vector<uint8_t> rom = assemble(ss.str());
+                    verify_rom(rom, {ii});
+                }
+            }
+        }
+    }
 }

@@ -34,3 +34,4 @@ AllowAllArgumentsOnNextLine: false
 BinPackArguments: false
 AlignOperands: Align
 AlignAfterOpenBracket: Align
+AlwaysBreakTemplateDeclarations: Yes

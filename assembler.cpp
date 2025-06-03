@@ -22,10 +22,29 @@ private:
 
     void assemble_set();
 
+    void assemble_load_store(word_t width_sel, bool is_load);
+
+    template <word_t access_width, bool is_load>
+    void assemble_load_store()
+    {
+        static_assert(access_width == 1 || access_width == 2 || access_width == 4);
+
+        word_t width_sel = access_width == 4 ? 2 : access_width == 2 ? 1 : 0;
+        assemble_load_store(width_sel, is_load);
+    }
+
     using assemble_fn = void (instr_assembler::*)();
 
     static inline std::pair<char const *, assemble_fn> dispatch_table[]{
         {"set", &instr_assembler::assemble_set},
+        {"store.1", &instr_assembler::assemble_load_store<1, false>},
+        {"store.2", &instr_assembler::assemble_load_store<2, false>},
+        {"store.4", &instr_assembler::assemble_load_store<4, false>},
+        {"store", &instr_assembler::assemble_load_store<4, false>},
+        {"load.1", &instr_assembler::assemble_load_store<1, true>},
+        {"load.2", &instr_assembler::assemble_load_store<2, true>},
+        {"load.4", &instr_assembler::assemble_load_store<4, true>},
+        {"load", &instr_assembler::assemble_load_store<4, true>},
     };
 
     std::span<std::string_view> tokens_;
@@ -64,6 +83,20 @@ void instr_assembler::assemble_set()
     assert(value < (1 << 20));
 
     push_instr(instr::set(*dest_reg, value));
+}
+
+void instr_assembler::assemble_load_store(word_t width_sel, bool is_load)
+{
+    assert(tokens_.size() == 2);
+
+    std::optional<reg> lhs_reg = from_str<reg>(tokens_[0]);
+    assert(lhs_reg.has_value());
+
+    std::optional<reg> rhs_reg = from_str<reg>(tokens_[1]);
+    assert(rhs_reg.has_value());
+
+    auto ctor = is_load ? &instr::load : &instr::store;
+    push_instr(ctor(*lhs_reg, *rhs_reg, width_sel));
 }
 
 static std::vector<std::string_view> tokenize_line(std::string_view line)

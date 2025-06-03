@@ -37,6 +37,10 @@ static constexpr word_t raw(reg r)
     return static_cast<word_t>(r);
 }
 
-template <typename T> std::optional<T> from_str(std::string_view str);
+template <typename T>
+std::optional<T> from_str(std::string_view str);
 
-template <> std::optional<reg> from_str<reg>(std::string_view str);
+template <>
+std::optional<reg> from_str<reg>(std::string_view str);
+
+std::string_view to_str(reg rr);
