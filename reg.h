@@ -3,6 +3,7 @@
 #include "cpu_base.h"
 
 #include <cstddef>
+#include <format>
 #include <optional>
 #include <string_view>
 
@@ -44,3 +45,19 @@ template <>
 std::optional<reg> from_str<reg>(std::string_view str);
 
 std::string_view to_str(reg rr);
+
+template <>
+struct std::formatter<reg>
+{
+    template <class ParseContext>
+    constexpr auto parse(ParseContext & ctx)
+    {
+        return ctx.begin();
+    }
+
+    template <class FormatContext>
+    auto format(reg const & rr, FormatContext & ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", to_str(rr));
+    }
+};

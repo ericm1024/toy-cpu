@@ -7,20 +7,26 @@
 #include <sstream>
 #include <vector>
 
-static void verify_rom(std::span<uint8_t const> rom, std::initializer_list<instr> instructions)
+static void do_test(std::string program, std::initializer_list<instr> instructions)
 {
-    assert(rom.size() == instructions.size() * sizeof(word_t));
+    std::vector<uint8_t> rom = assemble(program);
     auto it = rom.begin();
     for (instr ii : instructions) {
         assert(memcmp(&ii.storage, &*it, sizeof(word_t)) == 0);
         it += sizeof(word_t);
     }
+    std::string disassembly = disassemble(rom);
+
+    // we can't compare the disassembly with the original program because the mapping from text
+    // to bytecode is not 1-to-1 (e.g. load.4 is equivalent to load, jump labels & comments are
+    // lost, etc)
+
+    assert(assemble(disassembly) == rom);
 }
 
 TEST("assembler.basic")
 {
-    std::vector<uint8_t> rom = assemble("set r1 100\nset r2 42");
-    verify_rom(rom, {instr::set(r1, 100), instr::set(r2, 42)});
+    do_test("set r1 100\nset r2 42", {instr::set(r1, 100), instr::set(r2, 42)});
 }
 
 TEST("assembler.load_store")
@@ -49,8 +55,7 @@ TEST("assembler.load_store")
 
                     instr ii = ctor(src, dst, width != 0 ? width : k_word_size);
 
-                    std::vector<uint8_t> rom = assemble(ss.str());
-                    verify_rom(rom, {ii});
+                    do_test(ss.str(), {ii});
                 }
             }
         }
@@ -74,8 +79,7 @@ TEST("assembler.add")
                 ss << " ";
                 ss << to_str(op2);
 
-                std::vector<uint8_t> rom = assemble(ss.str());
-                verify_rom(rom, {instr::add(dst, op1, op2)});
+                do_test(ss.str(), {instr::add(dst, op1, op2)});
             }
         }
     }
@@ -83,6 +87,5 @@ TEST("assembler.add")
 
 TEST("assembler.halt")
 {
-    std::vector<uint8_t> rom = assemble("halt");
-    verify_rom(rom, {instr::halt()});
+    do_test("halt", {instr::halt()});
 }

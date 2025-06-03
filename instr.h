@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <format>
 
 static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 
@@ -140,7 +141,7 @@ public:
         return {opcode::add, raw(dest) | (raw(op1) << k_reg_bits) | (raw(op2) << (2 * k_reg_bits))};
     }
 
-    void decode_add(reg * dest, reg * op1, reg * op2)
+    void decode_add(reg * dest, reg * op1, reg * op2) const
     {
         word_t tmp = storage >> k_opcode_bits;
         *dest = static_cast<reg>(tmp & k_reg_mask);
@@ -156,4 +157,27 @@ public:
     }
 
     word_t storage;
+};
+
+std::string to_str(instr const & ii);
+
+template <>
+struct std::formatter<instr>
+{
+    template <class ParseContext>
+    constexpr std::format_parse_context::iterator parse(ParseContext & ctx)
+    {
+        return ctx.begin();
+    }
+
+    template <class FormatContext>
+    auto format(instr const & ii, FormatContext & ctx) const
+    {
+        std::string instr = to_str(ii);
+        auto it = ctx.out();
+        for (char c : instr) {
+            *it++ = c;
+        }
+        return it;
+    }
 };

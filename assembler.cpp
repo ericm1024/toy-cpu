@@ -180,3 +180,22 @@ std::vector<uint8_t> assemble(std::string_view program)
     }
     return rom;
 }
+
+std::string disassemble(std::span<uint8_t const> rom)
+{
+    assert(rom.size() % k_word_size == 0);
+
+    std::string ret;
+    for (size_t offset = 0; offset < rom.size(); offset += k_word_size) {
+        if (offset != 0) {
+            ret += "\n";
+        }
+
+        word_t raw_instr;
+        memcpy(&raw_instr, rom.data() + offset, sizeof(raw_instr));
+
+        instr ii{raw_instr};
+        ret += std::format("{}", ii);
+    }
+    return ret;
+}

@@ -1,7 +1,6 @@
 #include "test.h"
 
 // TODOs:
-// * disassembler
 // * mov instruction with immediate encoding
 // * per-module coverage data
 // * error handling in assembler code
