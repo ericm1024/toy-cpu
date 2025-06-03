@@ -52,20 +52,20 @@ private:
 
     void assemble_compare();
 
-    void assemble_branch(instr::cmp_flag flag);
-
-    template <instr::cmp_flag flag>
-    void assemble_branch()
-    {
-        assemble_branch(flag);
-    }
-
     void assemble_jump(instr::cmp_flag flag);
 
     template <instr::cmp_flag flag>
     void assemble_jump()
     {
         assemble_jump(flag);
+    }
+
+    void assemble_ijump(instr::cmp_flag flag);
+
+    template <instr::cmp_flag flag>
+    void assemble_ijump()
+    {
+        assemble_ijump(flag);
     }
 
     using assemble_fn = void (instr_assembler::*)();
@@ -83,14 +83,6 @@ private:
         {"add", &instr_assembler::assemble_add},
         {"halt", &instr_assembler::assemble_halt},
         {"compare", &instr_assembler::assemble_compare},
-        {"branch.eq", &instr_assembler::assemble_branch<instr::eq>},
-        {"branch.ne", &instr_assembler::assemble_branch<instr::ne>},
-        {"branch.gt", &instr_assembler::assemble_branch<instr::gt>},
-        {"branch.ge", &instr_assembler::assemble_branch<instr::ge>},
-        {"branch.lt", &instr_assembler::assemble_branch<instr::lt>},
-        {"branch.le", &instr_assembler::assemble_branch<instr::le>},
-        {"branch", &instr_assembler::assemble_branch<instr::unc>},
-        {"branch.unc", &instr_assembler::assemble_branch<instr::unc>},
         {"jump.eq", &instr_assembler::assemble_jump<instr::eq>},
         {"jump.ne", &instr_assembler::assemble_jump<instr::ne>},
         {"jump.gt", &instr_assembler::assemble_jump<instr::gt>},
@@ -99,6 +91,14 @@ private:
         {"jump.le", &instr_assembler::assemble_jump<instr::le>},
         {"jump", &instr_assembler::assemble_jump<instr::unc>},
         {"jump.unc", &instr_assembler::assemble_jump<instr::unc>},
+        {"ijump.eq", &instr_assembler::assemble_ijump<instr::eq>},
+        {"ijump.ne", &instr_assembler::assemble_ijump<instr::ne>},
+        {"ijump.gt", &instr_assembler::assemble_ijump<instr::gt>},
+        {"ijump.ge", &instr_assembler::assemble_ijump<instr::ge>},
+        {"ijump.lt", &instr_assembler::assemble_ijump<instr::lt>},
+        {"ijump.le", &instr_assembler::assemble_ijump<instr::le>},
+        {"ijump", &instr_assembler::assemble_ijump<instr::unc>},
+        {"ijump.unc", &instr_assembler::assemble_ijump<instr::unc>},
     };
 
     std::span<std::string_view> tokens_;
@@ -188,7 +188,7 @@ void instr_assembler::assemble_compare()
     push_instr(instr::compare(*op1_reg, *op2_reg));
 }
 
-void instr_assembler::assemble_branch(instr::cmp_flag flag)
+void instr_assembler::assemble_jump(instr::cmp_flag flag)
 {
     assert(tokens_.size() == 1);
 
@@ -199,18 +199,18 @@ void instr_assembler::assemble_branch(instr::cmp_flag flag)
     } else {
         offset = parse_word<signed_word_t>(tokens_[0]);
     }
-    assert(instr::k_branch_min_offset <= offset && offset <= instr::k_branch_max_offset);
-    push_instr(instr::branch(flag, offset));
+    assert(instr::k_jump_min_offset <= offset && offset <= instr::k_jump_max_offset);
+    push_instr(instr::jump(flag, offset));
 }
 
-void instr_assembler::assemble_jump(instr::cmp_flag flag)
+void instr_assembler::assemble_ijump(instr::cmp_flag flag)
 {
     assert(tokens_.size() == 1);
 
     std::optional<reg> loc = from_str<reg>(tokens_[0]);
     assert(loc.has_value());
 
-    push_instr(instr::jump(flag, *loc));
+    push_instr(instr::ijump(flag, *loc));
 }
 
 static std::vector<std::string_view> tokenize_line(std::string_view line)
@@ -266,7 +266,7 @@ std::vector<uint8_t> assemble(std::string_view program)
 
     // TODO: eventually some mnemonics may emit multiple instructions, so this way of doing things
     // is fairly brittle. Instead of computing label offsets up front, then emitting instructions,
-    // I think we want to emit instructions first, then fill in jump offsets at the very end
+    // I think we want to emit instructions first, then fill in ijump offsets at the very end
     // once we've decided where everything is going to live.
     std::unordered_map<std::string_view, word_t> labels;
     std::vector<std::vector<std::string_view>> lines;

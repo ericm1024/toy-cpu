@@ -6,7 +6,7 @@
 
 static logger logger;
 
-void cpu::branch(instr::cmp_flag flag, signed_word_t offset)
+void cpu::jump(instr::cmp_flag flag, signed_word_t offset)
 {
     if (is_taken(flag)) {
         instr_ptr += offset;
@@ -16,7 +16,7 @@ void cpu::branch(instr::cmp_flag flag, signed_word_t offset)
     }
 }
 
-void cpu::jump(instr::cmp_flag flag, reg loc)
+void cpu::ijump(instr::cmp_flag flag, reg loc)
 {
     if (is_taken(flag)) {
         instr_ptr += get(loc);
@@ -121,18 +121,18 @@ void system_state::run()
             execute_compare(op1, op2);
             break;
         }
-        case opcode::branch: {
-            instr::cmp_flag flag;
-            signed_word_t offset;
-            instr.decode_branch(&flag, &offset);
-            cpu.branch(flag, offset);
-            break;
-        }
         case opcode::jump: {
             instr::cmp_flag flag;
+            signed_word_t offset;
+            instr.decode_jump(&flag, &offset);
+            cpu.jump(flag, offset);
+            break;
+        }
+        case opcode::ijump: {
+            instr::cmp_flag flag;
             reg loc;
-            instr.decode_jump(&flag, &loc);
-            cpu.jump(flag, loc);
+            instr.decode_ijump(&flag, &loc);
+            cpu.ijump(flag, loc);
             break;
         }
         default:

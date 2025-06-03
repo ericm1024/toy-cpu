@@ -96,7 +96,7 @@ TEST("system_state.execute.add")
     assert(state.cpu.get(r2) == 12345 + 98678);
 }
 
-TEST("system_state.execute.branch")
+TEST("system_state.execute.jump")
 {
     struct
     {
@@ -133,7 +133,7 @@ TEST("system_state.execute.branch")
             instr::set(r0, comparison.first),
             instr::set(r1, comparison.second),
             instr::compare(r0, r1),
-            instr::branch(flag, k_word_size * 3),
+            instr::jump(flag, k_word_size * 3),
             instr::set(r2, 42),
             instr::halt(),
             instr::set(r3, 42),
@@ -150,8 +150,8 @@ TEST("system_state.execute.branch")
     }
 }
 
-// Simple for-loop incrementing r0 until it reaches the value 5. Exercises a backwards branch.
-TEST("system_state.execute.branch.backwards")
+// Simple for-loop incrementing r0 until it reaches the value 5. Exercises a backwards jump.
+TEST("system_state.execute.jump.backwards")
 {
     char const * prog = R"(
 set r1 5
@@ -159,7 +159,7 @@ set r2 1
 set r0 0
 add r0 r0 r2
 compare r0 r1
-branch.ne -8
+jump.ne -8
 halt
 )";
     std::vector<uint8_t> rom = assemble(prog);
@@ -177,7 +177,7 @@ set r2 1
 set r0 0
 add r0 r0 r2
 compare r0 r1
-branch.ne -8
+jump.ne -8
 halt
 )";
     std::vector<uint8_t> rom = assemble(prog);

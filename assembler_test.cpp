@@ -18,7 +18,7 @@ static void do_test(std::string program, std::initializer_list<instr> instructio
     std::string disassembly = disassemble(rom);
 
     // we can't compare the disassembly with the original program because the mapping from text
-    // to bytecode is not 1-to-1 (e.g. load.4 is equivalent to load, jump labels & comments are
+    // to bytecode is not 1-to-1 (e.g. load.4 is equivalent to load, ijump labels & comments are
     // lost, etc)
 
     assert(assemble(disassembly) == rom);
@@ -125,57 +125,7 @@ TEST("assembler.cmp")
     }
 }
 
-static void test_branch(signed_word_t offset, instr::cmp_flag flag, bool adorn = true)
-{
-    std::stringstream ss;
-    ss << "branch";
-    if (adorn) {
-        ss << ".";
-        ss << to_str(flag);
-    }
-
-    ss << " ";
-    ss << offset;
-
-    do_test(ss.str(), {instr::branch(flag, offset)});
-}
-
-TEST("assembler.branch")
-{
-    for (signed_word_t offset :
-             {instr::k_branch_min_offset, -4, 0, 4, instr::k_branch_max_offset}) {
-        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
-            test_branch(offset, flag);
-        }
-
-        // test unadored unconditional branch
-        test_branch(offset, instr::unc, false /* !adorn */);
-    }
-}
-
-TEST("assembler.branch.labels")
-{
-    // forward label
-    do_test(
-        R"(
-compare r0 r1
-branch.eq label
-set r1 15
-label:
-halt
-)",
-        {instr::compare(r0, r1), instr::branch(instr::eq, 8), instr::set(r1, 15), instr::halt()});
-
-    // backwards label. This is obviously a infinite loop, but it tests the assembler
-    do_test(R"(
-label:
-compare r0 r1
-branch.eq label
-)",
-            {instr::compare(r0, r1), instr::branch(instr::eq, -4)});
-}
-
-static void test_jump(reg loc, instr::cmp_flag flag, bool adorn = true)
+static void test_jump(signed_word_t offset, instr::cmp_flag flag, bool adorn = true)
 {
     std::stringstream ss;
     ss << "jump";
@@ -185,19 +135,68 @@ static void test_jump(reg loc, instr::cmp_flag flag, bool adorn = true)
     }
 
     ss << " ";
-    ss << to_str(loc);
+    ss << offset;
 
-    do_test(ss.str(), {instr::jump(flag, loc)});
+    do_test(ss.str(), {instr::jump(flag, offset)});
 }
 
 TEST("assembler.jump")
 {
-    for (reg loc : k_all_registers) {
+    for (signed_word_t offset : {instr::k_jump_min_offset, -4, 0, 4, instr::k_jump_max_offset}) {
         for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
-            test_jump(loc, flag);
+            test_jump(offset, flag);
         }
 
         // test unadored unconditional jump
-        test_jump(loc, instr::unc, false /* !adorn */);
+        test_jump(offset, instr::unc, false /* !adorn */);
+    }
+}
+
+TEST("assembler.jump.labels")
+{
+    // forward label
+    do_test(
+        R"(
+compare r0 r1
+jump.eq label
+set r1 15
+label:
+halt
+)",
+        {instr::compare(r0, r1), instr::jump(instr::eq, 8), instr::set(r1, 15), instr::halt()});
+
+    // backwards label. This is obviously a infinite loop, but it tests the assembler
+    do_test(R"(
+label:
+compare r0 r1
+jump.eq label
+)",
+            {instr::compare(r0, r1), instr::jump(instr::eq, -4)});
+}
+
+static void test_ijump(reg loc, instr::cmp_flag flag, bool adorn = true)
+{
+    std::stringstream ss;
+    ss << "ijump";
+    if (adorn) {
+        ss << ".";
+        ss << to_str(flag);
+    }
+
+    ss << " ";
+    ss << to_str(loc);
+
+    do_test(ss.str(), {instr::ijump(flag, loc)});
+}
+
+TEST("assembler.ijump")
+{
+    for (reg loc : k_all_registers) {
+        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+            test_ijump(loc, flag);
+        }
+
+        // test unadored unconditional ijump
+        test_ijump(loc, instr::unc, false /* !adorn */);
     }
 }

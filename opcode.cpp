@@ -17,8 +17,8 @@ static std::string_view const opcode_to_str[] = {
     MAKE_ENTRY(halt),
     MAKE_ENTRY(load),
     MAKE_ENTRY(compare),
-    MAKE_ENTRY(branch),
     MAKE_ENTRY(jump),
+    MAKE_ENTRY(ijump),
 };
 
 template <>

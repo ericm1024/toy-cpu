@@ -94,7 +94,7 @@ int fib(int x)
 fib:
     set r3 1
     compare r2 r3
-    branch.gt recurse # r2 > 1, recurse
+    jump.gt recurse # r2 > 1, recurse
 
 recurse:
 

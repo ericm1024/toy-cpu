@@ -191,33 +191,33 @@ public:
     static size_t constexpr k_cmp_flag_bits = 4;
 
     // we encode into this may bits
-    static size_t constexpr k_branch_offset_encode_bits
+    static size_t constexpr k_jump_offset_encode_bits
         = k_instr_bits - k_opcode_bits - k_cmp_flag_bits;
 
     // ... but users can specify this many bits, since instruction offsets must be divisible
     // by k_word_size
-    static size_t constexpr k_branch_offset_bits = k_branch_offset_encode_bits + k_word_size_bits;
+    static size_t constexpr k_jump_offset_bits = k_jump_offset_encode_bits + k_word_size_bits;
 
-    static signed_word_t constexpr k_branch_max_offset
-        = k_word_size * ((1 << (k_branch_offset_encode_bits - 1)) - 1);
+    static signed_word_t constexpr k_jump_max_offset
+        = k_word_size * ((1 << (k_jump_offset_encode_bits - 1)) - 1);
 
-    static signed_word_t constexpr k_branch_min_offset = -k_branch_max_offset;
+    static signed_word_t constexpr k_jump_min_offset = -k_jump_max_offset;
 
-    static instr branch(cmp_flag flag, signed_word_t relative_offset)
+    static instr jump(cmp_flag flag, signed_word_t relative_offset)
     {
-        assert(relative_offset <= k_branch_max_offset && relative_offset >= k_branch_min_offset);
+        assert(relative_offset <= k_jump_max_offset && relative_offset >= k_jump_min_offset);
         assert(relative_offset % k_word_size == 0);
 
         // mask off extra sign bits, we'll do an arithmetic shift during decode to recover them
         word_t offset_bits = static_cast<word_t>(relative_offset / k_word_size)
-                             & ((1U << k_branch_offset_encode_bits) - 1);
+                             & ((1U << k_jump_offset_encode_bits) - 1);
 
-        return {opcode::branch, static_cast<word_t>(flag) | offset_bits << k_cmp_flag_bits};
+        return {opcode::jump, static_cast<word_t>(flag) | offset_bits << k_cmp_flag_bits};
     }
 
-    void decode_branch(cmp_flag * flag, signed_word_t * relative_offset) const
+    void decode_jump(cmp_flag * flag, signed_word_t * relative_offset) const
     {
-        assert(get_opcode() == opcode::branch);
+        assert(get_opcode() == opcode::jump);
         word_t tmp = storage >> k_opcode_bits;
         *flag = static_cast<cmp_flag>(tmp & ((1U << k_cmp_flag_bits) - 1));
         *relative_offset
@@ -225,14 +225,14 @@ public:
               * k_word_size;
     }
 
-    static instr jump(cmp_flag flag, reg loc)
+    static instr ijump(cmp_flag flag, reg loc)
     {
-        return {opcode::jump, static_cast<word_t>(flag) | raw(loc) << k_cmp_flag_bits};
+        return {opcode::ijump, static_cast<word_t>(flag) | raw(loc) << k_cmp_flag_bits};
     }
 
-    void decode_jump(cmp_flag * flag, reg * loc) const
+    void decode_ijump(cmp_flag * flag, reg * loc) const
     {
-        assert(get_opcode() == opcode::jump);
+        assert(get_opcode() == opcode::ijump);
         word_t tmp = storage >> k_opcode_bits;
         *flag = static_cast<cmp_flag>(tmp & ((1U << k_cmp_flag_bits) - 1));
         tmp >>= k_cmp_flag_bits;

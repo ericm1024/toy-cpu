@@ -68,17 +68,17 @@ std::string to_str(instr const & ii)
         ii.decode_compare(&op1, &op2);
         return std::format("compare {} {}", op1, op2);
     }
-    case opcode::branch: {
-        instr::cmp_flag flag;
-        signed_word_t relative_offset;
-        ii.decode_branch(&flag, &relative_offset);
-        return std::format("branch.{} {}", to_str(flag), relative_offset);
-    }
     case opcode::jump: {
         instr::cmp_flag flag;
+        signed_word_t relative_offset;
+        ii.decode_jump(&flag, &relative_offset);
+        return std::format("jump.{} {}", to_str(flag), relative_offset);
+    }
+    case opcode::ijump: {
+        instr::cmp_flag flag;
         reg loc;
-        ii.decode_jump(&flag, &loc);
-        return std::format("jump.{} {}", flag, loc);
+        ii.decode_ijump(&flag, &loc);
+        return std::format("ijump.{} {}", flag, loc);
     }
     default:
         return "unknown";
