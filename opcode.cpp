@@ -1,6 +1,7 @@
 #include "opcode.h"
 
 #include <iterator>
+#include <optional>
 #include <string_view>
 
 static std::string_view const opcode_to_str[] = {
@@ -18,6 +19,17 @@ static std::string_view const opcode_to_str[] = {
     MAKE_ENTRY(compare),
     MAKE_ENTRY(branch),
 };
+
+template <>
+std::optional<opcode> from_str<opcode>(std::string_view str)
+{
+    for (size_t i = 0; i < std::size(opcode_to_str); ++i) {
+        if (opcode_to_str[i] == str) {
+            return static_cast<opcode>(i);
+        }
+    }
+    return std::nullopt;
+}
 
 char const * to_str(opcode op)
 {

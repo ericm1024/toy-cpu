@@ -1,7 +1,6 @@
 #include "test.h"
 
 // TODOs:
-// * assembler support for jump labels
 // * unconditional jumps
 // * push/pop support
 // * indirect jumps

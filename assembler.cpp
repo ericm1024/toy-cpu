@@ -12,8 +12,12 @@ static logger logger;
 
 struct instr_assembler
 {
-    instr_assembler(std::span<std::string_view> tokens, std::vector<uint8_t> * rom)
+    instr_assembler(std::span<std::string_view> tokens, word_t instr_offset,
+                    std::unordered_map<std::string_view, word_t> const & labels,
+                    std::vector<uint8_t> * rom)
         : tokens_{tokens}
+        , instr_offset_{instr_offset}
+        , labels_{labels}
         , rom_{rom}
     { }
 
@@ -80,6 +84,8 @@ private:
     };
 
     std::span<std::string_view> tokens_;
+    word_t const instr_offset_;
+    std::unordered_map<std::string_view, word_t> const & labels_;
     std::vector<uint8_t> * const rom_;
 };
 
@@ -98,7 +104,7 @@ void instr_assembler::assemble()
 void instr_assembler::push_instr(instr ii)
 {
     auto it = rom_->insert(rom_->end(), sizeof(word_t), 0);
-    logger.debug("rom->size() = {}", rom_->size());
+    logger.debug("rom->size() = {}, emit instr {}", rom_->size(), ii);
     memcpy(&*it, &ii.storage, sizeof(word_t));
 }
 
@@ -168,7 +174,13 @@ void instr_assembler::assemble_branch(instr::cmp_flag flag)
 {
     assert(tokens_.size() == 1);
 
-    signed_word_t offset = parse_word<signed_word_t>(tokens_[0]);
+    auto it = labels_.find(tokens_[0]);
+    signed_word_t offset;
+    if (it != labels_.end()) {
+        offset = it->second - instr_offset_;
+    } else {
+        offset = parse_word<signed_word_t>(tokens_[0]);
+    }
     assert(instr::k_branch_min_offset <= offset && offset <= instr::k_branch_max_offset);
     push_instr(instr::branch(flag, offset));
 }
@@ -209,11 +221,29 @@ static void strip_comments(std::vector<std::string_view> * tokens)
     tokens->erase(std::find_if(tokens->begin(), tokens->end(), is_comment), tokens->end());
 }
 
+static bool is_label(std::span<std::string_view const> tokens, std::string_view * label)
+{
+    if (tokens.size() == 1 && tokens[0].back() == ':') {
+        *label = tokens[0].substr(0, tokens[0].size() - 1);
+        assert(!from_str<reg>(*label) && !from_str<opcode>(*label) && label->size() > 0
+               && isalpha(label->front()));
+        return true;
+    }
+    return false;
+}
+
 std::vector<uint8_t> assemble(std::string_view program)
 {
     std::vector<uint8_t> rom;
 
+    // TODO: eventually some mnemonics may emit multiple instructions, so this way of doing things
+    // is fairly brittle. Instead of computing label offsets up front, then emitting instructions,
+    // I think we want to emit instructions first, then fill in jump offsets at the very end
+    // once we've decided where everything is going to live.
+    std::unordered_map<std::string_view, word_t> labels;
+    std::vector<std::vector<std::string_view>> lines;
     size_t start = 0;
+    word_t word_offset = 0;
     while (start < program.size()) {
         size_t end = program.find('\n', start);
         if (end == std::string_view::npos) {
@@ -234,9 +264,25 @@ std::vector<uint8_t> assemble(std::string_view program)
         if (tokens.size() == 0) {
             continue;
         }
-        instr_assembler assembler{tokens, &rom};
-        assembler.assemble();
+
+        std::string_view label;
+        if (is_label(tokens, &label)) {
+            labels.emplace(label, word_offset);
+            continue;
+        }
+
+        lines.push_back(tokens);
+
+        word_offset += k_word_size;
     }
+
+    word_offset = 0;
+    for (auto & line : lines) {
+        instr_assembler assembler{line, word_offset, labels, &rom};
+        assembler.assemble();
+        word_offset += k_word_size;
+    }
+
     return rom;
 }
 

@@ -142,3 +142,25 @@ TEST("assembler.branch")
         }
     }
 }
+
+TEST("assembler.jump_labels")
+{
+    // forward label
+    do_test(
+        R"(
+compare r0 r1
+branch.eq label
+set r1 15
+label:
+halt
+)",
+        {instr::compare(r0, r1), instr::branch(instr::eq, 8), instr::set(r1, 15), instr::halt()});
+
+    // backwards label. This is obviously a infinite loop, but it tests the assembler
+    do_test(R"(
+label:
+compare r0 r1
+branch.eq label
+)",
+            {instr::compare(r0, r1), instr::branch(instr::eq, -4)});
+}
