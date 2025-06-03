@@ -33,6 +33,8 @@ private:
         assemble_load_store(width_sel, is_load);
     }
 
+    void assemble_add();
+
     using assemble_fn = void (instr_assembler::*)();
 
     static inline std::pair<char const *, assemble_fn> dispatch_table[]{
@@ -45,6 +47,7 @@ private:
         {"load.2", &instr_assembler::assemble_load_store<2, true>},
         {"load.4", &instr_assembler::assemble_load_store<4, true>},
         {"load", &instr_assembler::assemble_load_store<4, true>},
+        {"add", &instr_assembler::assemble_add},
     };
 
     std::span<std::string_view> tokens_;
@@ -97,6 +100,22 @@ void instr_assembler::assemble_load_store(word_t width_sel, bool is_load)
 
     auto ctor = is_load ? &instr::load : &instr::store;
     push_instr(ctor(*lhs_reg, *rhs_reg, width_sel));
+}
+
+void instr_assembler::assemble_add()
+{
+    assert(tokens_.size() == 3);
+
+    std::optional<reg> dst_reg = from_str<reg>(tokens_[0]);
+    assert(dst_reg.has_value());
+
+    std::optional<reg> op1_reg = from_str<reg>(tokens_[1]);
+    assert(op1_reg.has_value());
+
+    std::optional<reg> op2_reg = from_str<reg>(tokens_[2]);
+    assert(op2_reg.has_value());
+
+    push_instr(instr::add(*dst_reg, *op1_reg, *op2_reg));
 }
 
 static std::vector<std::string_view> tokenize_line(std::string_view line)

@@ -57,3 +57,27 @@ TEST("assembler.load_store")
         }
     }
 }
+
+TEST("assembler.add")
+{
+    for (reg dst : {reg::r1, reg::r2}) {
+        for (reg op1 : {reg::r3, reg::r4}) {
+            for (reg op2 : {reg::r5, reg::r6}) {
+                std::stringstream ss;
+                ss << "add";
+
+                ss << " ";
+                ss << to_str(dst);
+
+                ss << " ";
+                ss << to_str(op1);
+
+                ss << " ";
+                ss << to_str(op2);
+
+                std::vector<uint8_t> rom = assemble(ss.str());
+                verify_rom(rom, {instr::add(dst, op1, op2)});
+            }
+        }
+    }
+}
