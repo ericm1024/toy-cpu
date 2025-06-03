@@ -24,7 +24,7 @@ tests: $(BIN_DIR)/cpu-dbg
 .PHONY: coverage
 coverage: $(BIN_DIR)/cpu-cov
 	LLVM_PROFILE_FILE=$(COV_DIR)/cpu.profraw $(BIN_DIR)/cpu-cov
-	llvm-profdata merge -sparse $(COV_DIR)/cpu.profraw -o $(COV_DIR)/cpu.profdata
+	llvm-profdata merge $(COV_DIR)/cpu.profraw -o $(COV_DIR)/cpu.profdata
 	llvm-cov show -instr-profile $(COV_DIR)/cpu.profdata -format html -object $(BIN_DIR)/cpu-cov -output-dir $(COV_DIR) -show-branches count
 
 .PHONY: clean

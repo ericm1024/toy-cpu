@@ -2,7 +2,6 @@
 
 // TODOs:
 // * mov instruction with immediate encoding
-// * per-module coverage data
 // * error handling in assembler code
 // * modules
 // * IWYU
