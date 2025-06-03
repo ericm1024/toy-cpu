@@ -29,6 +29,11 @@ TEST("assembler.basic")
     do_test("set r1 100\nset r2 42", {instr::set(r1, 100), instr::set(r2, 42)});
 }
 
+TEST("assembler.blank_lines")
+{
+    do_test("\nset r1 100\n\n\nset r2 42", {instr::set(r1, 100), instr::set(r2, 42)});
+}
+
 TEST("assembler.load_store")
 {
     std::pair<char const *, instr (*)(reg, reg, word_t)> const mnemonic_table[] = {
@@ -37,8 +42,8 @@ TEST("assembler.load_store")
     };
 
     for (auto & [mnemonic, ctor] : mnemonic_table) {
-        for (reg src : {reg::r1, reg::r2}) {
-            for (reg dst : {reg::r3, reg::r4}) {
+        for (reg src : k_all_registers) {
+            for (reg dst : k_all_registers) {
                 for (word_t width : {0, 1, 2, 4}) {
                     std::stringstream ss;
                     ss << mnemonic;
@@ -64,9 +69,9 @@ TEST("assembler.load_store")
 
 TEST("assembler.add")
 {
-    for (reg dst : {reg::r1, reg::r2}) {
-        for (reg op1 : {reg::r3, reg::r4}) {
-            for (reg op2 : {reg::r5, reg::r6}) {
+    for (reg dst : k_all_registers) {
+        for (reg op1 : k_all_registers) {
+            for (reg op2 : k_all_registers) {
                 std::stringstream ss;
                 ss << "add";
 
@@ -88,4 +93,39 @@ TEST("assembler.add")
 TEST("assembler.halt")
 {
     do_test("halt", {instr::halt()});
+}
+
+TEST("assembler.cmp")
+{
+    for (reg op1 : k_all_registers) {
+        for (reg op2 : k_all_registers) {
+            std::stringstream ss;
+            ss << "compare";
+
+            ss << " ";
+            ss << to_str(op1);
+
+            ss << " ";
+            ss << to_str(op2);
+            do_test(ss.str(), {instr::compare(op1, op2)});
+        }
+    }
+}
+
+TEST("assembler.branch")
+{
+    for (instr::cmp_flag flag :
+         {instr::eq, instr::ne, instr::gt, instr::ge, instr::lt, instr::le}) {
+        for (signed_word_t offset :
+             {instr::k_branch_min_offset, -4, 0, 4, instr::k_branch_max_offset}) {
+            std::stringstream ss;
+            ss << "branch.";
+            ss << to_str(flag);
+
+            ss << " ";
+            ss << offset;
+
+            do_test(ss.str(), {instr::branch(flag, offset)});
+        }
+    }
 }

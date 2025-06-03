@@ -20,6 +20,16 @@ struct instr_assembler
     void assemble();
 
 private:
+    template <typename word_type>
+    word_type parse_word(std::string_view token)
+    {
+        word_type value;
+        std::from_chars_result result = std::from_chars(token.begin(), token.end(), value);
+        assert(result.ec == std::errc{});
+        assert(result.ptr == token.end());
+        return value;
+    }
+
     void push_instr(instr ii);
 
     void assemble_set();
@@ -36,6 +46,16 @@ private:
 
     void assemble_halt();
 
+    void assemble_compare();
+
+    void assemble_branch(instr::cmp_flag flag);
+
+    template <instr::cmp_flag flag>
+    void assemble_branch()
+    {
+        assemble_branch(flag);
+    }
+
     using assemble_fn = void (instr_assembler::*)();
 
     static inline std::pair<char const *, assemble_fn> dispatch_table[]{
@@ -50,6 +70,13 @@ private:
         {"load", &instr_assembler::assemble_load_store<4, true>},
         {"add", &instr_assembler::assemble_add},
         {"halt", &instr_assembler::assemble_halt},
+        {"compare", &instr_assembler::assemble_compare},
+        {"branch.eq", &instr_assembler::assemble_branch<instr::eq>},
+        {"branch.ne", &instr_assembler::assemble_branch<instr::ne>},
+        {"branch.gt", &instr_assembler::assemble_branch<instr::gt>},
+        {"branch.ge", &instr_assembler::assemble_branch<instr::ge>},
+        {"branch.lt", &instr_assembler::assemble_branch<instr::lt>},
+        {"branch.le", &instr_assembler::assemble_branch<instr::le>},
     };
 
     std::span<std::string_view> tokens_;
@@ -81,11 +108,8 @@ void instr_assembler::assemble_set()
     std::optional<reg> dest_reg = from_str<reg>(tokens_[0]);
     assert(dest_reg.has_value());
 
-    word_t value;
-    std::from_chars_result result = std::from_chars(tokens_[1].begin(), tokens_[1].end(), value);
-    assert(result.ec == std::errc{});
-    assert(result.ptr == tokens_[1].end());
-    assert(value < (1 << 20));
+    word_t value = parse_word<word_t>(tokens_[1]);
+    assert(value < instr::k_max_set_value);
 
     push_instr(instr::set(*dest_reg, value));
 }
@@ -127,6 +151,28 @@ void instr_assembler::assemble_halt()
     push_instr(instr::halt());
 }
 
+void instr_assembler::assemble_compare()
+{
+    assert(tokens_.size() == 2);
+
+    std::optional<reg> op1_reg = from_str<reg>(tokens_[0]);
+    assert(op1_reg.has_value());
+
+    std::optional<reg> op2_reg = from_str<reg>(tokens_[1]);
+    assert(op2_reg.has_value());
+
+    push_instr(instr::compare(*op1_reg, *op2_reg));
+}
+
+void instr_assembler::assemble_branch(instr::cmp_flag flag)
+{
+    assert(tokens_.size() == 1);
+
+    signed_word_t offset = parse_word<signed_word_t>(tokens_[0]);
+    assert(instr::k_branch_min_offset <= offset && offset <= instr::k_branch_max_offset);
+    push_instr(instr::branch(flag, offset));
+}
+
 static std::vector<std::string_view> tokenize_line(std::string_view line)
 {
     size_t start = 0;
@@ -163,14 +209,17 @@ std::vector<uint8_t> assemble(std::string_view program)
         size_t end = program.find('\n', start);
         if (end == std::string_view::npos) {
             end = program.size();
+            if (end == start) {
+                break;
+            }
         }
         logger.debug("start={}, end={}", start, end);
 
         std::string_view line = program.substr(start, end - start);
-        if (line.size() == 0) {
-            break;
-        }
         start = end + 1;
+        if (line.size() == 0) {
+            continue;
+        }
 
         logger.debug("parse line {}", line);
 

@@ -1,5 +1,29 @@
 #include "instr.h"
 
+static std::string_view const cmp_flag_to_str[] = {
+#define MAKE_ENTRY(flag)                                                                           \
+    [static_cast<uint8_t>(instr::cmp_flag::flag)] = std::string_view                               \
+    {                                                                                              \
+        #flag                                                                                      \
+    }
+
+    MAKE_ENTRY(eq),
+    MAKE_ENTRY(ne),
+    MAKE_ENTRY(gt),
+    MAKE_ENTRY(ge),
+    MAKE_ENTRY(lt),
+    MAKE_ENTRY(le),
+};
+
+std::string_view to_str(instr::cmp_flag flag)
+{
+    word_t index = static_cast<uint8_t>(flag);
+    if (index >= std::size(cmp_flag_to_str)) {
+        return "unknown";
+    }
+    return cmp_flag_to_str[index];
+}
+
 std::string to_str(instr const & ii)
 {
     switch (ii.get_opcode()) {
@@ -28,6 +52,17 @@ std::string to_str(instr const & ii)
     }
     case opcode::halt:
         return "halt";
+    case opcode::compare: {
+        reg op1, op2;
+        ii.decode_compare(&op1, &op2);
+        return std::format("compare {} {}", op1, op2);
+    }
+    case opcode::branch: {
+        instr::cmp_flag flag;
+        signed_word_t relative_offset;
+        ii.decode_branch(&flag, &relative_offset);
+        return std::format("branch.{} {}", to_str(flag), relative_offset);
+    }
     default:
         return "unknown";
     }

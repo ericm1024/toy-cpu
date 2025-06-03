@@ -15,6 +15,8 @@ static std::string_view const opcode_to_str[] = {
     MAKE_ENTRY(add),
     MAKE_ENTRY(halt),
     MAKE_ENTRY(load),
+    MAKE_ENTRY(compare),
+    MAKE_ENTRY(branch),
 };
 
 char const * to_str(opcode op)

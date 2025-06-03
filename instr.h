@@ -30,10 +30,13 @@ struct instr
         return static_cast<opcode>(storage & k_opcode_mask);
     }
 
+    static word_t constexpr k_max_set_value
+        = (1U << (k_instr_bits - k_opcode_bits - k_reg_bits)) - 1;
+
     // value can be at most 20 bits
     static instr set(reg dest, word_t value)
     {
-        assert(value < (1U << (k_instr_bits - k_opcode_bits - k_reg_bits)));
+        assert(value <= k_max_set_value);
         return {opcode::set, raw(dest) | (value << k_reg_bits)};
     }
 
@@ -143,6 +146,7 @@ public:
 
     void decode_add(reg * dest, reg * op1, reg * op2) const
     {
+        assert(get_opcode() == opcode::add);
         word_t tmp = storage >> k_opcode_bits;
         *dest = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
@@ -156,8 +160,75 @@ public:
         return {opcode::halt, 0};
     }
 
+    static instr compare(reg op1, reg op2)
+    {
+        return {opcode::compare, raw(op1) | (raw(op2) << k_reg_bits)};
+    }
+
+    void decode_compare(reg * op1, reg * op2) const
+    {
+        assert(get_opcode() == opcode::compare);
+        word_t tmp = storage >> k_opcode_bits;
+        *op1 = static_cast<reg>(tmp & k_reg_mask);
+        tmp >>= k_reg_bits;
+        *op2 = static_cast<reg>(tmp & k_reg_mask);
+    }
+
+    enum class cmp_flag : uint8_t
+    {
+        eq,
+        ne,
+        gt,
+        ge,
+        lt,
+        le,
+    };
+    using enum cmp_flag;
+
+    static size_t constexpr k_cmp_flag_bits = 4;
+
+    // we encode into this may bits
+    static size_t constexpr k_branch_offset_encode_bits
+        = k_instr_bits - k_opcode_bits - k_cmp_flag_bits;
+
+    // ... but users can specify this many bits, since instruction offsets must be divisible
+    // by k_word_size
+    static size_t constexpr k_branch_offset_bits = k_branch_offset_encode_bits + k_word_size_bits;
+
+    static signed_word_t constexpr k_branch_max_offset
+        = k_word_size * ((1 << (k_branch_offset_encode_bits - 1)) - 1);
+
+    static signed_word_t constexpr k_branch_min_offset = -k_branch_max_offset;
+
+    static instr branch(cmp_flag flag, signed_word_t relative_offset)
+    {
+        assert(relative_offset <= k_branch_max_offset && relative_offset >= k_branch_min_offset);
+        assert(relative_offset % k_word_size == 0);
+
+        // mask off extra sign bits, we'll do an arithmetic shift during decode to recover them
+        word_t offset_bits = static_cast<word_t>(relative_offset / k_word_size)
+                             & ((1U << k_branch_offset_encode_bits) - 1);
+
+        return {opcode::branch, static_cast<word_t>(flag) | offset_bits << k_cmp_flag_bits};
+    }
+
+    void decode_branch(cmp_flag * flag, signed_word_t * relative_offset) const
+    {
+        assert(get_opcode() == opcode::branch);
+        word_t tmp = storage >> k_opcode_bits;
+        *flag = static_cast<cmp_flag>(tmp & ((1U << k_cmp_flag_bits) - 1));
+        *relative_offset
+            = (static_cast<signed_word_t>(storage) >> (k_cmp_flag_bits + k_opcode_bits))
+              * k_word_size;
+    }
+
     word_t storage;
 };
+
+std::string_view to_str(instr::cmp_flag flag);
+
+template <typename T>
+std::optional<T> from_str(std::string_view str);
 
 std::string to_str(instr const & ii);
 

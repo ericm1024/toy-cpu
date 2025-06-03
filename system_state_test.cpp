@@ -1,3 +1,4 @@
+#include "assembler.h"
 #include "instr.h"
 #include "iomap.h"
 #include "system_state.h"
@@ -93,4 +94,77 @@ TEST("system_state.execute.add")
     });
     state.run();
     assert(state.cpu.get(r2) == 12345 + 98678);
+}
+
+TEST("system_state.execute.branch")
+{
+    struct
+    {
+        instr::cmp_flag flag;
+        std::pair<word_t, word_t> comparison;
+        bool taken;
+    } cases[] = {
+        {instr::cmp_flag::eq, {1, 1}, true},
+        {instr::cmp_flag::eq, {1, 0}, false},
+
+        {instr::cmp_flag::ne, {1, 0}, true},
+        {instr::cmp_flag::ne, {1, 1}, false},
+
+        {instr::cmp_flag::gt, {1, 0}, true},
+        {instr::cmp_flag::gt, {1, 1}, false},
+        {instr::cmp_flag::gt, {1, 2}, false},
+
+        {instr::cmp_flag::ge, {1, 0}, true},
+        {instr::cmp_flag::ge, {1, 1}, true},
+        {instr::cmp_flag::ge, {1, 2}, false},
+
+        {instr::cmp_flag::lt, {1, 0}, false},
+        {instr::cmp_flag::lt, {1, 1}, false},
+        {instr::cmp_flag::lt, {1, 2}, true},
+
+        {instr::cmp_flag::le, {1, 0}, false},
+        {instr::cmp_flag::le, {1, 1}, true},
+        {instr::cmp_flag::le, {1, 2}, true},
+    };
+
+    for (auto [flag, comparison, taken] : cases) {
+        system_state state{};
+        state.set_rom({
+            instr::set(r0, comparison.first),
+            instr::set(r1, comparison.second),
+            instr::compare(r0, r1),
+            instr::branch(flag, k_word_size * 3),
+            instr::set(r2, 42),
+            instr::halt(),
+            instr::set(r3, 42),
+            instr::halt(),
+        });
+        state.run();
+        if (taken) {
+            assert(state.cpu.get(r2) == 0);
+            assert(state.cpu.get(r3) == 42);
+        } else {
+            assert(state.cpu.get(r2) == 42);
+            assert(state.cpu.get(r3) == 0);
+        }
+    }
+}
+
+// Simple for-loop incrementing r0 until it reaches the value 5. Exercises a backwards branch.
+TEST("system_state.execute.branch.backwards")
+{
+    char const * prog = R"(
+set r1 5
+set r2 1
+set r0 0
+add r0 r0 r2
+compare r0 r1
+branch.ne -8
+halt
+)";
+    std::vector<uint8_t> rom = assemble(prog);
+    system_state state{};
+    state.set_rom(rom);
+    state.run();
+    assert(state.cpu.get(r0) == 5);
 }

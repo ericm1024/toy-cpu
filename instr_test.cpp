@@ -1,44 +1,95 @@
 #include "instr.h"
+#include "log.h"
 #include "test.h"
 
 #include <cassert>
 #include <initializer_list>
 
+static logger logger;
+
 TEST("instr.enc_dec_set")
 {
-    instr ii = instr::set(r1, 42);
-    reg dest;
-    word_t value;
-    ii.decode_set(&dest, &value);
-    assert(dest == r1);
-    assert(value == 42);
+    for (reg rr : k_all_registers) {
+        for (word_t value :
+             {0U,
+              std::uniform_int_distribution{1U, instr::k_max_set_value - 1}(test_rng()),
+              instr::k_max_set_value}) {
+            instr ii = instr::set(rr, value);
+
+            reg rr_out;
+            word_t value_out;
+            ii.decode_set(&rr_out, &value_out);
+            assert(rr_out == rr);
+            assert(value_out == value);
+        }
+    }
 }
 
 TEST("instr.enc_dec_add")
 {
-    instr ii = instr::add(r1, r2, r3);
-    reg dest, op1, op2;
-    ii.decode_add(&dest, &op1, &op2);
-    assert(dest == r1);
-    assert(op1 == r2);
-    assert(op2 == r3);
+    for (reg dest : k_all_registers) {
+        for (reg op1 : k_all_registers) {
+            for (reg op2 : k_all_registers) {
+                instr ii = instr::add(dest, op1, op2);
+                reg dest_out, op1_out, op2_out;
+                ii.decode_add(&dest_out, &op1_out, &op2_out);
+                assert(dest_out == dest);
+                assert(op1_out == op1);
+                assert(op2_out == op2);
+            }
+        }
+    }
 }
 
 TEST("instr.enc_dec_load_store")
 {
-    for (word_t width : {1, 2, 4}) {
-        instr ii = instr::load(r4, r3, width);
-        reg addr, src;
-        word_t width_out;
-        ii.decode_load(&addr, &src, &width_out);
-        assert(addr == r4);
-        assert(src == r3);
-        assert(width_out == width);
+    for (reg lhs : k_all_registers) {
+        for (reg rhs : k_all_registers) {
+            for (word_t width : {1, 2, 4}) {
+                instr ii = instr::load(lhs, rhs, width);
+                reg lhs_out, rhs_out;
+                word_t width_out;
+                ii.decode_load(&lhs_out, &rhs_out, &width_out);
+                assert(lhs_out == lhs);
+                assert(rhs_out == rhs);
+                assert(width_out == width);
 
-        ii = instr::store(r5, r6, width);
-        ii.decode_store(&addr, &src, &width_out);
-        assert(addr == r5);
-        assert(src == r6);
-        assert(width_out == width);
+                ii = instr::store(lhs, rhs, width);
+                ii.decode_store(&lhs_out, &rhs_out, &width_out);
+                assert(lhs_out == lhs);
+                assert(rhs_out == rhs);
+                assert(width_out == width);
+            }
+        }
+    }
+}
+
+TEST("instr.compare")
+{
+    for (reg lhs : k_all_registers) {
+        for (reg rhs : k_all_registers) {
+            instr ii = instr::compare(lhs, rhs);
+            reg lhs_out, rhs_out;
+            ii.decode_compare(&lhs_out, &rhs_out);
+            assert(lhs_out == lhs);
+            assert(rhs_out == rhs);
+        }
+    }
+}
+
+TEST("instr.branch")
+{
+    for (instr::cmp_flag flag :
+         {instr::eq, instr::ne, instr::gt, instr::ge, instr::lt, instr::le}) {
+        for (signed_word_t offset :
+             {instr::k_branch_min_offset, -4, 0, 4, instr::k_branch_max_offset}) {
+            instr ii = instr::branch(flag, offset);
+            instr::cmp_flag flag_out;
+            signed_word_t offset_out;
+            ii.decode_branch(&flag_out, &offset_out);
+
+            assert(flag_out == flag);
+            assert(offset_out == offset);
+        }
     }
 }

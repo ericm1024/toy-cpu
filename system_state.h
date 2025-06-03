@@ -1,4 +1,6 @@
 #include "cpu_base.h"
+#include "instr.h"
+#include "iomap.h"
 #include "reg.h"
 
 #include <cassert>
@@ -6,8 +8,21 @@
 #include <span>
 #include <vector>
 
+enum class cpu_cmp_flags : uint8_t
+{
+    invalid = 0,
+    eq = 1,
+    lt = 2,
+    gt = 4,
+};
+
 struct cpu
 {
+    cpu()
+    {
+        set_cmp_flag(cpu_cmp_flags::invalid);
+    }
+
     word_t & get(reg reg)
     {
         word_t index = raw(reg);
@@ -15,6 +30,18 @@ struct cpu
         return registers[index];
     }
 
+    void set_cmp_flag(cpu_cmp_flags flag)
+    {
+        cpu_cmp_flags = 1 << static_cast<uint8_t>(flag);
+    }
+
+    bool get_cmp_flag(cpu_cmp_flags flag)
+    {
+        return cpu_cmp_flags & (1 << static_cast<uint8_t>(flag));
+    }
+
+    uint8_t cpu_cmp_flags;
+    word_t instr_ptr = iomap::k_rom_base;
     word_t registers[raw(reg::num_registers)]{};
 };
 
@@ -23,6 +50,7 @@ struct system_state
     system_state(std::span<word_t const> program = {});
 
     void set_rom(std::span<word_t const> program);
+    void set_rom(std::span<uint8_t const> program);
     void set_rom(std::vector<instr> program);
 
 private:
@@ -44,6 +72,8 @@ private:
 
 public:
     void execute_add(reg dest, reg op1, reg op2);
+    void execute_compare(reg op1, reg op2);
+    void execute_branch(instr::cmp_flag flags, signed_word_t offset);
 
     std::vector<uint8_t> console;
     std::unique_ptr<uint8_t[]> rom;

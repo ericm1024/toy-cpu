@@ -20,6 +20,11 @@ void system_state::set_rom(std::span<word_t const> program)
     set_rom(static_cast<void const *>(program.data()), program.size() * sizeof(word_t));
 }
 
+void system_state::set_rom(std::span<uint8_t const> program)
+{
+    set_rom(static_cast<void const *>(program.data()), program.size());
+}
+
 void system_state::set_rom(std::vector<instr> program)
 {
     set_rom(static_cast<void const *>(program.data()), program.size() * sizeof(word_t));
@@ -33,13 +38,10 @@ void system_state::set_rom(void const * prog, size_t num_bytes)
 
 void system_state::run()
 {
-    word_t instr_ptr = iomap::k_rom_base;
-
     while (true) {
-        assert(instr_ptr - iomap::k_rom_base < iomap::k_rom_size);
-        instr instr{raw_load(instr_ptr)};
-        instr_ptr += k_word_size;
-        logger.debug("execute opcode {}", to_str(instr.get_opcode()));
+        assert(cpu.instr_ptr - iomap::k_rom_base < iomap::k_rom_size);
+        instr instr{raw_load(cpu.instr_ptr)};
+        logger.debug("[ip={:#x}] executing {}", cpu.instr_ptr, instr);
         switch (instr.get_opcode()) {
         case opcode::set: {
             reg dest;
@@ -59,10 +61,6 @@ void system_state::run()
             reg dest, addr;
             word_t width;
             instr.decode_load(&dest, &addr, &width);
-            logger.debug("execute load r{} = *r{} ({:#x})",
-                         (unsigned)dest,
-                         (unsigned)addr,
-                         cpu.get(addr));
             execute_load(addr, dest, width);
             break;
         }
@@ -74,9 +72,23 @@ void system_state::run()
         }
         case opcode::halt:
             return;
+        case opcode::compare: {
+            reg op1, op2;
+            instr.decode_compare(&op1, &op2);
+            execute_compare(op1, op2);
+            break;
+        }
+        case opcode::branch: {
+            instr::cmp_flag flags;
+            signed_word_t offset;
+            instr.decode_branch(&flags, &offset);
+            execute_branch(flags, offset);
+            break;
+        }
         default:
             assert(false && "unknown opcode");
         }
+        cpu.instr_ptr += k_word_size;
     }
 }
 
@@ -149,4 +161,53 @@ void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * v
 void system_state::execute_add(reg dest, reg op1, reg op2)
 {
     cpu.get(dest) = cpu.get(op1) + cpu.get(op2);
+}
+
+void system_state::execute_compare(reg op1, reg op2)
+{
+    // clear invalid flag, flags are now valid
+    cpu.cpu_cmp_flags = 0;
+    if (cpu.get(op1) == cpu.get(op2)) {
+        cpu.set_cmp_flag(cpu_cmp_flags::eq);
+    } else if (cpu.get(op1) < cpu.get(op2)) {
+        cpu.set_cmp_flag(cpu_cmp_flags::lt);
+    } else {
+        cpu.set_cmp_flag(cpu_cmp_flags::gt);
+    }
+}
+
+void system_state::execute_branch(instr::cmp_flag flags, signed_word_t offset)
+{
+    assert(!cpu.get_cmp_flag(cpu_cmp_flags::invalid));
+
+    bool taken = false;
+    switch (flags) {
+    case instr::eq:
+        taken = cpu.get_cmp_flag(cpu_cmp_flags::eq);
+        break;
+    case instr::ne:
+        taken = !cpu.get_cmp_flag(cpu_cmp_flags::eq);
+        break;
+    case instr::gt:
+        taken = cpu.get_cmp_flag(cpu_cmp_flags::gt);
+        break;
+    case instr::ge:
+        taken = cpu.get_cmp_flag(cpu_cmp_flags::gt) || cpu.get_cmp_flag(cpu_cmp_flags::eq);
+        break;
+    case instr::lt:
+        taken = cpu.get_cmp_flag(cpu_cmp_flags::lt);
+        break;
+    case instr::le:
+        taken = cpu.get_cmp_flag(cpu_cmp_flags::lt) || cpu.get_cmp_flag(cpu_cmp_flags::eq);
+        break;
+    default:
+        assert(false);
+    }
+
+    if (taken) {
+        cpu.instr_ptr += offset;
+        // back one instruction so the increment at the end of execution takes us to the right
+        // place.
+        cpu.instr_ptr -= k_word_size;
+    }
 }

@@ -38,6 +38,8 @@ static constexpr word_t raw(reg r)
     return static_cast<word_t>(r);
 }
 
+extern reg const k_all_registers[raw(reg::num_registers)];
+
 template <typename T>
 std::optional<T> from_str(std::string_view str);
 
