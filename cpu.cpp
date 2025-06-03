@@ -3,7 +3,6 @@
 // TODOs:
 // * disassembler
 // * mov instruction with immediate encoding
-// * debug logging
 // * per-module coverage data
 // * error handling in assembler code
 // * modules

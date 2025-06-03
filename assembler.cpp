@@ -1,11 +1,14 @@
 #include "assembler.h"
 #include "instr.h"
+#include "log.h"
 #include "opcode.h"
 #include "reg.h"
 
 #include <cassert>
 #include <charconv>
 #include <span>
+
+static logger logger;
 
 struct instr_assembler
 {
@@ -68,7 +71,7 @@ void instr_assembler::assemble()
 void instr_assembler::push_instr(instr ii)
 {
     auto it = rom_->insert(rom_->end(), sizeof(word_t), 0);
-    printf("rom->size() = %zu\n", rom_->size());
+    logger.debug("rom->size() = {}", rom_->size());
     memcpy(&*it, &ii.storage, sizeof(word_t));
 }
 
@@ -143,10 +146,7 @@ static std::vector<std::string_view> tokenize_line(std::string_view line)
         }
         start = end;
 
-        printf("parse token %.*s, size %zu\n",
-               static_cast<int>(token.size()),
-               token.data(),
-               token.size());
+        logger.debug("parse token {}, size {}", token, token.size());
 
         tokens.push_back(token);
     }
@@ -164,7 +164,7 @@ std::vector<uint8_t> assemble(std::string_view program)
         if (end == std::string_view::npos) {
             end = program.size();
         }
-        printf("start=%zu, end=%zu\n", start, end);
+        logger.debug("start={}, end={}", start, end);
 
         std::string_view line = program.substr(start, end - start);
         if (line.size() == 0) {
@@ -172,7 +172,7 @@ std::vector<uint8_t> assemble(std::string_view program)
         }
         start = end + 1;
 
-        printf("parse line %.*s\n", static_cast<int>(line.size()), line.data());
+        logger.debug("parse line {}", line);
 
         std::vector<std::string_view> tokens = tokenize_line(line);
         instr_assembler assembler{tokens, &rom};

@@ -1,7 +1,11 @@
 #include <cstdio>
+#include <format>
 #include <vector>
 
+#include "log.h"
 #include "test.h"
+
+static logger logger;
 
 struct test
 {
@@ -19,7 +23,7 @@ struct test_registry
     void run()
     {
         for (auto const & [name, func] : tests) {
-            printf("running test '%s'\n", name);
+            logger.info("running tests '{}'", name);
             func();
         }
     }

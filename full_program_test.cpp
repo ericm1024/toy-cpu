@@ -39,7 +39,6 @@ static std::vector<word_t> make_add_numbers_rom()
 
     // r0 <- k_rom_base + k_nums_offset
     size_t i_instr = 0;
-    printf("set addr %d\n", iomap::k_rom_base + k_nums_offset);
     rom[i_instr++] = instr::set(r0, iomap::k_rom_base + k_nums_offset).storage;
 
     // r1 <- *r0     ;; r1 holds 42

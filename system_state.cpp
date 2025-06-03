@@ -1,7 +1,10 @@
 #include "system_state.h"
 #include "instr.h"
 #include "iomap.h"
+#include "log.h"
 #include "opcode.h"
+
+static logger logger;
 
 system_state::system_state(std::span<word_t const> program)
     : rom{std::make_unique<uint8_t[]>(iomap::k_rom_size)}
@@ -36,7 +39,7 @@ void system_state::run()
         assert(instr_ptr - iomap::k_rom_base < iomap::k_rom_size);
         instr instr{raw_load(instr_ptr)};
         instr_ptr += k_word_size;
-        printf("execute opcode %s\n", to_str(instr.get_opcode()));
+        logger.debug("execute opcode {}", to_str(instr.get_opcode()));
         switch (instr.get_opcode()) {
         case opcode::set: {
             reg dest;
@@ -56,10 +59,10 @@ void system_state::run()
             reg dest, addr;
             word_t width;
             instr.decode_load(&dest, &addr, &width);
-            printf("execute load r%d = *r%d (0x%x)\n",
-                   (unsigned)dest,
-                   (unsigned)addr,
-                   cpu.get(addr));
+            logger.debug("execute load r{} = *r{} ({:#x})",
+                         (unsigned)dest,
+                         (unsigned)addr,
+                         cpu.get(addr));
             execute_load(addr, dest, width);
             break;
         }
@@ -123,7 +126,7 @@ void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * v
         return;
     }
 
-    printf("execute_load_store_impl is_load=%d addr=0x%x width=%d\n", is_load, addr, width);
+    logger.debug("execute_load_store_impl is_load={} addr={:#x} width={}", is_load, addr, width);
 
     uint8_t * mem_addr;
     if (addr >= iomap::k_ram_base && addr <= iomap::k_ram_base + iomap::k_ram_size - width) {
