@@ -1,5 +1,8 @@
 #include "reg.h"
 
+#include <iterator>
+#include <string>
+
 static std::string_view const reg_to_str[] = {
 #define MAKE_ENTRY(r)                                                                              \
     [raw(reg::r)] = std::string_view                                                               \

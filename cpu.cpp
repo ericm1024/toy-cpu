@@ -6,7 +6,6 @@
 // * error handling in assembler code
 // * mov instruction with immediate encoding
 // * C++ modules?
-// * IWYU
 
 int main()
 {

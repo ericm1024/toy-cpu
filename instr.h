@@ -7,6 +7,11 @@
 #include <cassert>
 #include <cstddef>
 #include <format>
+#include <initializer_list>
+#include <optional>
+#include <stdint.h>
+#include <string>
+#include <string_view>
 
 static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 
@@ -256,8 +261,7 @@ public:
     }
 
     // we encode into this may bits
-    static size_t constexpr k_call_offset_encode_bits
-        = k_instr_bits - k_opcode_bits;
+    static size_t constexpr k_call_offset_encode_bits = k_instr_bits - k_opcode_bits;
 
     // ... but users can specify this many bits, since instruction offsets must be divisible
     // by k_word_size

@@ -4,8 +4,11 @@
 #include "reg.h"
 
 #include <cassert>
+#include <iterator>
 #include <memory>
 #include <span>
+#include <stddef.h>
+#include <stdint.h>
 #include <vector>
 
 enum class cpu_cmp_flags : uint8_t

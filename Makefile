@@ -36,6 +36,9 @@ clean:
 format:
 	git ls-files | grep ".*\.\(cpp\|h\)$$" | xargs clang-format --style=file -i
 
+.PHONY: iwyu-impl
+iwyu-impl:
+	echo $(SRCS) | xargs -n1 include-what-you-use $(CXXFLAGS) 2>&1 | fix_include
+
 .PHONY: iwyu
-iwyu:
-	include-what-you-use $(CXXFLAGS) $(SRCS)
+iwyu: iwyu-impl format

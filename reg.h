@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <format>
 #include <optional>
+#include <stdint.h>
 #include <string_view>
 
 // 16 architectural registers

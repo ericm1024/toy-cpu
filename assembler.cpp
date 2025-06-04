@@ -1,14 +1,22 @@
 #include "assembler.h"
+
+#include "cpu_base.h"
 #include "instr.h"
 #include "log.h"
 #include "opcode.h"
 #include "reg.h"
 
+#include <algorithm>
 #include <cassert>
 #include <charconv>
 #include <cstring>
+#include <ctype.h>
+#include <format>
+#include <optional>
 #include <span>
+#include <system_error>
 #include <unordered_map>
+#include <utility>
 
 static logger logger{__FILE__};
 

@@ -35,3 +35,10 @@ BinPackArguments: false
 AlignOperands: Align
 AlignAfterOpenBracket: Align
 AlwaysBreakTemplateDeclarations: Yes
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^"'
+    Priority:        2
+  - Regex:           '^<'
+    Priority:        3

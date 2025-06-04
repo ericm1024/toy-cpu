@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <initializer_list>
+#include <random>
 
 static logger logger{__FILE__};
 
@@ -126,8 +127,7 @@ TEST("instr.ijump")
 
 TEST("instr.call")
 {
-    for (signed_word_t offset :
-             {instr::k_call_min_offset, -4, 0, 4, instr::k_call_max_offset}) {
+    for (signed_word_t offset : {instr::k_call_min_offset, -4, 0, 4, instr::k_call_max_offset}) {
 
         instr ii = instr::call(offset);
         signed_word_t offset_out;

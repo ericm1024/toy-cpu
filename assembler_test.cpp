@@ -1,11 +1,16 @@
 #include "assembler.h"
 #include "cpu_base.h"
 #include "instr.h"
+#include "reg.h"
 #include "test.h"
 
+#include <assert.h>
 #include <cstring>
+#include <format>
+#include <initializer_list>
 #include <span>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 static void do_test(std::string program, std::initializer_list<instr> instructions)

@@ -2,6 +2,7 @@
 
 #include <iterator>
 #include <optional>
+#include <string>
 #include <string_view>
 
 static std::string_view const opcode_to_str[] = {

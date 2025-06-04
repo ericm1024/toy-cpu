@@ -1,12 +1,19 @@
 #include "assembler.h"
+#include "cpu_base.h"
 #include "instr.h"
 #include "iomap.h"
 #include "log.h"
+#include "reg.h"
 #include "system_state.h"
 #include "test.h"
 
-#include <cstring>
 #include <cassert>
+#include <cstring>
+#include <format>
+#include <initializer_list>
+#include <span>
+#include <stdint.h>
+#include <string>
 #include <vector>
 
 static logger logger{__FILE__};
@@ -136,7 +143,8 @@ recurse:
     load r15 r14      # pop return address off the stack
     ijump r15         # return
 
-)", iomap::k_ram_base);
+)",
+                                   iomap::k_ram_base);
 
     return assemble(prog);
 }

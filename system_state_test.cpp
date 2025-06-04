@@ -5,6 +5,7 @@
 #include "test.h"
 
 #include <cassert>
+#include <utility>
 
 TEST("system_state.execute.load_store")
 {

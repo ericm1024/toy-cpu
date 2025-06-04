@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <optional>
+#include <string>
 #include <string_view>
 
 static constinit char const * const level_to_str[]{

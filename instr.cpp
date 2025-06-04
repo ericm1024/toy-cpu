@@ -1,5 +1,7 @@
 #include "instr.h"
 
+#include <iterator>
+
 static std::string_view const cmp_flag_to_str[] = {
 #define MAKE_ENTRY(flag)                                                                           \
     [static_cast<uint8_t>(instr::cmp_flag::flag)] = std::string_view                               \
