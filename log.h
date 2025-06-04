@@ -19,9 +19,13 @@ struct logger
 
     logger(char const * prefix);
 
+    // XXX: would like to use this constructor, but doesn't do what it should due to a clang bug
+    // (https://github.com/llvm/llvm-project/issues/56379 maybe?)
+#if 0
     logger(std::source_location loc = std::source_location::current())
         : logger{loc.file_name()}
     { }
+#endif
 
     void vlog(log_level level, std::string_view fmt, std::format_args args);
 

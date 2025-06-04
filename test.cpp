@@ -5,7 +5,7 @@
 #include "log.h"
 #include "test.h"
 
-static logger logger;
+static logger logger{__FILE__};
 
 struct test
 {

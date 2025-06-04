@@ -8,7 +8,7 @@
 #include <charconv>
 #include <span>
 
-static logger logger;
+static logger logger{__FILE__};
 
 struct instr_assembler
 {

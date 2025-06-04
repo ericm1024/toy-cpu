@@ -5,7 +5,7 @@
 #include <cassert>
 #include <initializer_list>
 
-static logger logger;
+static logger logger{__FILE__};
 
 TEST("instr.enc_dec_set")
 {
