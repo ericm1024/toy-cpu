@@ -4,6 +4,7 @@
 // * push/pop support
 // * de-duplicate string table boilerplate
 // * error handling in assembler code
+// * less boilerplate for bit packing
 // * mov instruction with immediate encoding
 // * C++ modules?
 
