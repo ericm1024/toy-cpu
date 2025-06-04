@@ -34,7 +34,7 @@ clean:
 
 .PHONY: format
 format:
-	git ls-files | grep ".*\.\(cpp\|h\)$$" | xargs clang-format --style=file -i
+	git ls-files | grep ".*\.\(cpp\|h\)$$" | grep -v 'enum_def.h' | xargs clang-format --style=file -i
 
 .PHONY: iwyu-impl
 iwyu-impl:
