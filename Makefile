@@ -1,6 +1,6 @@
 
 CXX=clang++
-WARNINGS=-Werror -Wall -Wextra -Wswitch-enum
+WARNINGS=-Werror -Wall -Wextra -Wswitch-enum -Wno-c99-designator
 CXXFLAGS=$(WARNINGS) -std=c++20 -g
 COV_FLAGS=-fprofile-instr-generate -fcoverage-mapping
 DBG_FLAGS=-fsanitize=address -fsanitize=undefined
@@ -35,3 +35,7 @@ clean:
 .PHONY: format
 format:
 	git ls-files | grep ".*\.\(cpp\|h\)$$" | xargs clang-format --style=file -i
+
+.PHONY: iwyu
+iwyu:
+	include-what-you-use $(CXXFLAGS) $(SRCS)

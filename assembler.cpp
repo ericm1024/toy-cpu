@@ -6,7 +6,9 @@
 
 #include <cassert>
 #include <charconv>
+#include <cstring>
 #include <span>
+#include <unordered_map>
 
 static logger logger{__FILE__};
 

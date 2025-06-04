@@ -5,6 +5,7 @@
 #include "system_state.h"
 #include "test.h"
 
+#include <cstring>
 #include <cassert>
 #include <vector>
 

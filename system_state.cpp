@@ -4,6 +4,8 @@
 #include "log.h"
 #include "opcode.h"
 
+#include <cstring>
+
 static logger logger{__FILE__};
 
 void cpu::add(reg dest, reg op1, reg op2)
@@ -72,7 +74,9 @@ system_state::system_state(std::span<word_t const> program)
 {
     memset(rom.get(), 0, iomap::k_rom_size);
     memset(ram.get(), 0, iomap::k_ram_size);
-    set_rom(program);
+    if (program.size() > 0) {
+        set_rom(program);
+    }
 }
 
 void system_state::set_rom(std::span<word_t const> program)

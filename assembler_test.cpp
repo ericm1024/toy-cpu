@@ -3,6 +3,7 @@
 #include "instr.h"
 #include "test.h"
 
+#include <cstring>
 #include <span>
 #include <sstream>
 #include <vector>
