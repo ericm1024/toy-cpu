@@ -48,6 +48,8 @@ private:
 
     void assemble_add();
 
+    void assemble_sub();
+
     void assemble_halt();
 
     void assemble_compare();
@@ -68,6 +70,8 @@ private:
         assemble_ijump(flag);
     }
 
+    void assemble_call();
+
     using assemble_fn = void (instr_assembler::*)();
 
     static inline std::pair<char const *, assemble_fn> dispatch_table[]{
@@ -81,6 +85,7 @@ private:
         {"load.4", &instr_assembler::assemble_load_store<4, true>},
         {"load", &instr_assembler::assemble_load_store<4, true>},
         {"add", &instr_assembler::assemble_add},
+        {"sub", &instr_assembler::assemble_sub},
         {"halt", &instr_assembler::assemble_halt},
         {"compare", &instr_assembler::assemble_compare},
         {"jump.eq", &instr_assembler::assemble_jump<instr::eq>},
@@ -99,6 +104,7 @@ private:
         {"ijump.le", &instr_assembler::assemble_ijump<instr::le>},
         {"ijump", &instr_assembler::assemble_ijump<instr::unc>},
         {"ijump.unc", &instr_assembler::assemble_ijump<instr::unc>},
+        {"call", &instr_assembler::assemble_call},
     };
 
     std::span<std::string_view> tokens_;
@@ -168,6 +174,22 @@ void instr_assembler::assemble_add()
     push_instr(instr::add(*dst_reg, *op1_reg, *op2_reg));
 }
 
+void instr_assembler::assemble_sub()
+{
+    assert(tokens_.size() == 3);
+
+    std::optional<reg> dst_reg = from_str<reg>(tokens_[0]);
+    assert(dst_reg.has_value());
+
+    std::optional<reg> op1_reg = from_str<reg>(tokens_[1]);
+    assert(op1_reg.has_value());
+
+    std::optional<reg> op2_reg = from_str<reg>(tokens_[2]);
+    assert(op2_reg.has_value());
+
+    push_instr(instr::sub(*dst_reg, *op1_reg, *op2_reg));
+}
+
 void instr_assembler::assemble_halt()
 {
     assert(tokens_.size() == 0);
@@ -211,6 +233,22 @@ void instr_assembler::assemble_ijump(instr::cmp_flag flag)
     assert(loc.has_value());
 
     push_instr(instr::ijump(flag, *loc));
+}
+
+void instr_assembler::assemble_call()
+{
+    assert(tokens_.size() == 1);
+
+    auto it = labels_.find(tokens_[0]);
+    signed_word_t offset;
+    if (it != labels_.end()) {
+        offset = it->second - instr_offset_;
+    } else {
+        offset = parse_word<signed_word_t>(tokens_[0]);
+    }
+
+    assert(instr::k_call_min_offset <= offset && offset <= instr::k_call_max_offset);
+    push_instr(instr::call(offset));
 }
 
 static std::vector<std::string_view> tokenize_line(std::string_view line)

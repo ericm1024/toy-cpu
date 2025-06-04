@@ -41,6 +41,22 @@ TEST("instr.enc_dec_add")
     }
 }
 
+TEST("instr.enc_dec_sub")
+{
+    for (reg dest : k_all_registers) {
+        for (reg op1 : k_all_registers) {
+            for (reg op2 : k_all_registers) {
+                instr ii = instr::sub(dest, op1, op2);
+                reg dest_out, op1_out, op2_out;
+                ii.decode_sub(&dest_out, &op1_out, &op2_out);
+                assert(dest_out == dest);
+                assert(op1_out == op1);
+                assert(op2_out == op2);
+            }
+        }
+    }
+}
+
 TEST("instr.enc_dec_load_store")
 {
     for (reg lhs : k_all_registers) {
@@ -105,5 +121,17 @@ TEST("instr.ijump")
             assert(flag_out == flag);
             assert(rr_out == rr);
         }
+    }
+}
+
+TEST("instr.call")
+{
+    for (signed_word_t offset :
+             {instr::k_call_min_offset, -4, 0, 4, instr::k_call_max_offset}) {
+
+        instr ii = instr::call(offset);
+        signed_word_t offset_out;
+        ii.decode_call(&offset_out);
+        assert(offset_out == offset);
     }
 }

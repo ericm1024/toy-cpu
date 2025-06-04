@@ -4,7 +4,17 @@
 #include "log.h"
 #include "opcode.h"
 
-static logger logger;
+static logger logger{__FILE__};
+
+void cpu::add(reg dest, reg op1, reg op2)
+{
+    get(dest) = get(op1) + get(op2);
+}
+
+void cpu::sub(reg dest, reg op1, reg op2)
+{
+    get(dest) = get(op1) - get(op2);
+}
 
 void cpu::jump(instr::cmp_flag flag, signed_word_t offset)
 {
@@ -19,7 +29,7 @@ void cpu::jump(instr::cmp_flag flag, signed_word_t offset)
 void cpu::ijump(instr::cmp_flag flag, reg loc)
 {
     if (is_taken(flag)) {
-        instr_ptr += get(loc);
+        instr_ptr = get(loc);
         // back one instruction so the increment at the end of execution takes us to the right
         // place.
         instr_ptr -= k_word_size;
@@ -47,6 +57,13 @@ bool cpu::is_taken(instr::cmp_flag flag) const
         assert(false);
         return false;
     }
+}
+
+void cpu::call(signed_word_t offset)
+{
+    get(r15) = instr_ptr + k_word_size;
+    instr_ptr += offset;
+    instr_ptr -= k_word_size;
 }
 
 system_state::system_state(std::span<word_t const> program)
@@ -110,7 +127,13 @@ void system_state::run()
         case opcode::add: {
             reg dest, op1, op2;
             instr.decode_add(&dest, &op1, &op2);
-            execute_add(dest, op1, op2);
+            cpu.add(dest, op1, op2);
+            break;
+        }
+        case opcode::sub: {
+            reg dest, op1, op2;
+            instr.decode_sub(&dest, &op1, &op2);
+            cpu.sub(dest, op1, op2);
             break;
         }
         case opcode::halt:
@@ -133,6 +156,12 @@ void system_state::run()
             reg loc;
             instr.decode_ijump(&flag, &loc);
             cpu.ijump(flag, loc);
+            break;
+        }
+        case opcode::call: {
+            signed_word_t offset;
+            instr.decode_call(&offset);
+            cpu.call(offset);
             break;
         }
         default:
@@ -188,8 +217,6 @@ void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * v
         return;
     }
 
-    logger.debug("execute_load_store_impl is_load={} addr={:#x} width={}", is_load, addr, width);
-
     uint8_t * mem_addr;
     if (addr >= iomap::k_ram_base && addr <= iomap::k_ram_base + iomap::k_ram_size - width) {
         mem_addr = ram.get() + (addr - iomap::k_ram_base);
@@ -206,11 +233,6 @@ void system_state::execute_load_store_impl(bool is_load, word_t addr, word_t * v
     } else {
         memcpy(mem_addr, value, width);
     }
-}
-
-void system_state::execute_add(reg dest, reg op1, reg op2)
-{
-    cpu.get(dest) = cpu.get(op1) + cpu.get(op2);
 }
 
 void system_state::execute_compare(reg op1, reg op2)

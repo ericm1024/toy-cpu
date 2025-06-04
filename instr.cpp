@@ -61,6 +61,11 @@ std::string to_str(instr const & ii)
         ii.decode_add(&dest, &op1, &op2);
         return std::format("add {} {} {}", dest, op1, op2);
     }
+    case opcode::sub: {
+        reg dest, op1, op2;
+        ii.decode_sub(&dest, &op1, &op2);
+        return std::format("sub {} {} {}", dest, op1, op2);
+    }
     case opcode::halt:
         return "halt";
     case opcode::compare: {
@@ -79,6 +84,11 @@ std::string to_str(instr const & ii)
         reg loc;
         ii.decode_ijump(&flag, &loc);
         return std::format("ijump.{} {}", flag, loc);
+    }
+    case opcode::call: {
+        signed_word_t relative_offset;
+        ii.decode_call(&relative_offset);
+        return std::format("call {}", relative_offset);
     }
     default:
         return "unknown";

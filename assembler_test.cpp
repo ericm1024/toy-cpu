@@ -103,6 +103,29 @@ TEST("assembler.add")
     }
 }
 
+TEST("assembler.sub")
+{
+    for (reg dst : k_all_registers) {
+        for (reg op1 : k_all_registers) {
+            for (reg op2 : k_all_registers) {
+                std::stringstream ss;
+                ss << "sub";
+
+                ss << " ";
+                ss << to_str(dst);
+
+                ss << " ";
+                ss << to_str(op1);
+
+                ss << " ";
+                ss << to_str(op2);
+
+                do_test(ss.str(), {instr::sub(dst, op1, op2)});
+            }
+        }
+    }
+}
+
 TEST("assembler.halt")
 {
     do_test("halt", {instr::halt()});
@@ -199,4 +222,34 @@ TEST("assembler.ijump")
         // test unadored unconditional ijump
         test_ijump(loc, instr::unc, false /* !adorn */);
     }
+}
+
+TEST("assembler.call")
+{
+    for (signed_word_t offset : {instr::k_call_min_offset, -4, 0, 4, instr::k_call_max_offset}) {
+        do_test(std::format("call {}", offset), {instr::call(offset)});
+    }
+}
+
+TEST("assembler.call.labels")
+{
+    // forward label
+    do_test(
+        R"(
+compare r0 r1
+call label
+set r1 15
+label:
+halt
+)",
+        {instr::compare(r0, r1), instr::call(8), instr::set(r1, 15), instr::halt()});
+
+    // backwards label. This is obviously a infinite loop, but it tests the assembler
+    do_test(R"(
+set r1 293
+label:
+compare r0 r1
+call label
+)",
+            {instr::set(r1, 293), instr::compare(r0, r1), instr::call(-4)});
 }

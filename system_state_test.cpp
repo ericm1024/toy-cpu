@@ -96,6 +96,19 @@ TEST("system_state.execute.add")
     assert(state.cpu.get(r2) == 12345 + 98678);
 }
 
+TEST("system_state.execute.sub")
+{
+    system_state state{};
+    state.set_rom({
+        instr::set(r0, 12345),
+        instr::set(r1, 98678),
+        instr::sub(r2, r1, r0),
+        instr::halt(),
+    });
+    state.run();
+    assert(state.cpu.get(r2) == word_t{98678} - word_t{12345});
+}
+
 TEST("system_state.execute.jump")
 {
     struct
@@ -169,20 +182,20 @@ halt
     assert(state.cpu.get(r0) == 5);
 }
 
-TEST("system_state.execute.fib")
+TEST("system_state.call")
 {
     char const * prog = R"(
 set r1 5
-set r2 1
-set r0 0
-add r0 r0 r2
-compare r0 r1
-jump.ne -8
+set r2 7
+call my_func
 halt
+my_func:
+add r0 r1 r2
+ijump r15
 )";
     std::vector<uint8_t> rom = assemble(prog);
     system_state state{};
     state.set_rom(rom);
     state.run();
-    assert(state.cpu.get(r0) == 5);
+    assert(state.cpu.get(r0) == 12);
 }

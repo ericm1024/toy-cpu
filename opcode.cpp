@@ -14,11 +14,13 @@ static std::string_view const opcode_to_str[] = {
     MAKE_ENTRY(set),
     MAKE_ENTRY(store),
     MAKE_ENTRY(add),
+    MAKE_ENTRY(sub),
     MAKE_ENTRY(halt),
     MAKE_ENTRY(load),
     MAKE_ENTRY(compare),
     MAKE_ENTRY(jump),
     MAKE_ENTRY(ijump),
+    MAKE_ENTRY(call),
 };
 
 template <>

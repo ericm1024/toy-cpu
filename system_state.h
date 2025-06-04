@@ -30,6 +30,9 @@ struct cpu
         return registers[index];
     }
 
+    void add(reg dest, reg op1, reg op2);
+    void sub(reg dest, reg op1, reg op2);
+
     void set_cmp_flag(cpu_cmp_flags flag)
     {
         cpu_cmp_flags = 1 << static_cast<uint8_t>(flag);
@@ -47,6 +50,8 @@ private:
     bool is_taken(instr::cmp_flag flag) const;
 
 public:
+    void call(signed_word_t offset);
+
     uint8_t cpu_cmp_flags;
     word_t instr_ptr = iomap::k_rom_base;
     word_t registers[raw(reg::num_registers)]{};
@@ -78,7 +83,6 @@ private:
     void execute_load_store_impl(bool is_load, word_t addr, word_t * value, word_t width);
 
 public:
-    void execute_add(reg dest, reg op1, reg op2);
     void execute_compare(reg op1, reg op2);
 
     std::vector<uint8_t> console;

@@ -155,6 +155,22 @@ public:
         *op2 = static_cast<reg>(tmp & k_reg_mask);
     }
 
+    static instr sub(reg dest, reg op1, reg op2)
+    {
+        return {opcode::sub, raw(dest) | (raw(op1) << k_reg_bits) | (raw(op2) << (2 * k_reg_bits))};
+    }
+
+    void decode_sub(reg * dest, reg * op1, reg * op2) const
+    {
+        assert(get_opcode() == opcode::sub);
+        word_t tmp = storage >> k_opcode_bits;
+        *dest = static_cast<reg>(tmp & k_reg_mask);
+        tmp >>= k_reg_bits;
+        *op1 = static_cast<reg>(tmp & k_reg_mask);
+        tmp >>= k_reg_bits;
+        *op2 = static_cast<reg>(tmp & k_reg_mask);
+    }
+
     static instr halt()
     {
         return {opcode::halt, 0};
@@ -237,6 +253,37 @@ public:
         *flag = static_cast<cmp_flag>(tmp & ((1U << k_cmp_flag_bits) - 1));
         tmp >>= k_cmp_flag_bits;
         *loc = static_cast<reg>(tmp & k_reg_mask);
+    }
+
+    // we encode into this may bits
+    static size_t constexpr k_call_offset_encode_bits
+        = k_instr_bits - k_opcode_bits;
+
+    // ... but users can specify this many bits, since instruction offsets must be divisible
+    // by k_word_size
+    static size_t constexpr k_call_offset_bits = k_call_offset_encode_bits + k_word_size_bits;
+
+    static signed_word_t constexpr k_call_max_offset
+        = k_word_size * ((1 << (k_call_offset_encode_bits - 1)) - 1);
+
+    static signed_word_t constexpr k_call_min_offset = -k_call_max_offset;
+
+    static instr call(signed_word_t relative_offset)
+    {
+        assert(relative_offset <= k_call_max_offset && relative_offset >= k_call_min_offset);
+        assert(relative_offset % k_word_size == 0);
+
+        // mask off extra sign bits, we'll do an arithmetic shift during decode to recover them
+        word_t offset_bits = static_cast<word_t>(relative_offset / k_word_size)
+                             & ((1U << k_call_offset_encode_bits) - 1);
+
+        return {opcode::call, offset_bits};
+    }
+
+    void decode_call(signed_word_t * relative_offset) const
+    {
+        assert(get_opcode() == opcode::call);
+        *relative_offset = (static_cast<signed_word_t>(storage) >> (k_opcode_bits)) * k_word_size;
     }
 
     word_t storage;

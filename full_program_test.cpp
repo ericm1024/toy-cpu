@@ -1,11 +1,14 @@
 #include "assembler.h"
 #include "instr.h"
 #include "iomap.h"
+#include "log.h"
 #include "system_state.h"
 #include "test.h"
 
 #include <cassert>
 #include <vector>
+
+static logger logger{__FILE__};
 
 static std::vector<word_t> make_hello_world_rom()
 {
@@ -76,34 +79,85 @@ TEST("full_program.add_numbers")
 
 static std::vector<uint8_t> make_fib_rom()
 {
-/*
-int fib(int x)
-{
-    if (x <= 1) {
-        return 1;
-    }
-    return fib(x - 1) + fib(x - 2);
-*/
-
     std::string prog = std::format(R"(
 
     # initialize stack pointer to k_ram_base
-    set r0 {}
+    set r14 {}
 
-# stack pointer is in r0, return value is in r1, argument is in r2
+    # test sets the function argument in r0
+
+    # call fib (sets r15 to return address)
+    call fib
+    halt
+
+# argument is in r0, return value is in r13, stack pointer r14, return address r15
+# callee r15
 fib:
-    set r3 1
-    compare r2 r3
-    jump.gt recurse # r2 > 1, recurse
+    set r1 1
+    compare r0 r1     # compare x with 1
+    jump.gt recurse   # x > 1, recursive case
+    set r13 1         # set return value to 1
+    ijump r15         # return
 
 recurse:
+    set r2 4
+
+    store r14 r15     # store r15 (return address) onto the stack
+    add r14 r14 r2    # increment stack pointer
+
+    store r14 r0      # store r0 (function argument) onto the stack
+    add r14 r14 r2    # increment stack pointer
+
+    set r2 1
+    sub r0 r0 r2      # compute x = x - 1
+
+    call fib          # recurse, calling fib(x-1)
+
+    set r2 4
+    sub r14 r14 r2    # decrement stack pointer
+    load r0 r14       # pop r0 (function argument) off the stack
+
+    store r14 r13     # store return value from fib(x-1) on the stack
+    add r14 r14 r2    # increment stack pointer
+
+    set r2 2
+    sub r0 r0 r2      # compute x = x - 2
+
+    call fib          # recurse, calling fib(x-2)
+
+    set r2 4
+    sub r14 r14 r2    # decrement stack pointer
+    load r1 r14       # pop fib(x-1) into r1
+
+    add r13 r13 r1    # set ret = fib(x-2) + fib(x-1)
+
+    sub r14 r14 r2    # decrement stack pointer
+    load r15 r14      # pop return address off the stack
+    ijump r15         # return
 
 )", iomap::k_ram_base);
 
     return assemble(prog);
 }
 
+static word_t fib(word_t x)
+{
+    if (x <= 1) {
+        return 1;
+    }
+    return fib(x - 1) + fib(x - 2);
+}
+
 TEST("full_program.fib")
 {
     std::vector<uint8_t> fib_rom = make_fib_rom();
+    for (word_t i : {1, 2, 3, 4, 5}) {
+        word_t expected = fib(i);
+        logger.debug("computing fib({}), expecting {}", i, expected);
+        system_state system;
+        system.set_rom(fib_rom);
+        system.cpu.get(r0) = i;
+        system.run();
+        assert(system.cpu.get(r13) == expected);
+    }
 }
