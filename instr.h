@@ -57,7 +57,6 @@ private:
 public:
     static word_t constexpr k_max_set_value = set_builder.max_value<set_val_f>();
 
-    // value can be at most 20 bits
     static instr set(reg dest, word_t value)
     {
         return instr{set_builder.build(opcode_f{opcode::set}, reg_f{dest}, set_val_f{value})};
@@ -71,9 +70,22 @@ public:
     }
 
 private:
+
+    struct lhs_reg_f : reg_f
+    { };
+
+    struct rhs_reg_f : reg_f
+    { };
+
     enum class width_sel : uint8_t
     {
     };
+
+    struct width_sell_f : field<2, width_sel>
+    { };
+
+    static constexpr auto load_store_builder
+        = base_instr_builder.add_field<lhs_reg_f>().add_field<rhs_reg_f>().add_field<width_sell_f>();
 
     static word_t sel_to_width(width_sel width_sel)
     {
@@ -92,20 +104,15 @@ private:
     {
         assert(op == opcode::load || op == opcode::store);
         width_sel sel = width_to_sel(width);
-        return {op,
-                std::to_underlying(addr) | std::to_underlying(src) << (k_reg_bits)
-                    | static_cast<word_t>(sel) << (2 * k_reg_bits)};
+        return instr{load_store_builder.build(opcode_f{op}, lhs_reg_f{addr}, rhs_reg_f{src},
+                                              width_sell_f{sel})};
     }
 
     void decode_load_store(reg * addr, reg * src, word_t * width) const
     {
-        word_t tmp = storage >> k_opcode_bits;
-        *addr = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        *src = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        uint8_t raw_width_sel = tmp & 0x3;
-        *width = sel_to_width(width_sel{raw_width_sel});
+        *addr = load_store_builder.extract<lhs_reg_f>(storage);
+        *src = load_store_builder.extract<rhs_reg_f>(storage);
+        *width = sel_to_width(load_store_builder.extract<width_sell_f>(storage));
     }
 
 public:
