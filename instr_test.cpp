@@ -30,14 +30,11 @@ TEST("instr.enc_dec_add")
 {
     for (reg dest : k_all_registers) {
         for (reg op1 : k_all_registers) {
-            for (reg op2 : k_all_registers) {
-                instr ii = instr::add(dest, op1, op2);
-                reg dest_out, op1_out, op2_out;
-                ii.decode_add(&dest_out, &op1_out, &op2_out);
-                assert(dest_out == dest);
-                assert(op1_out == op1);
-                assert(op2_out == op2);
-            }
+            instr ii = instr::add(dest, op1);
+            reg dest_out, op1_out;
+            ii.decode_add(&dest_out, &op1_out);
+            assert(dest_out == dest);
+            assert(op1_out == op1);
         }
     }
 }
@@ -46,14 +43,11 @@ TEST("instr.enc_dec_sub")
 {
     for (reg dest : k_all_registers) {
         for (reg op1 : k_all_registers) {
-            for (reg op2 : k_all_registers) {
-                instr ii = instr::sub(dest, op1, op2);
-                reg dest_out, op1_out, op2_out;
-                ii.decode_sub(&dest_out, &op1_out, &op2_out);
-                assert(dest_out == dest);
-                assert(op1_out == op1);
-                assert(op2_out == op2);
-            }
+            instr ii = instr::sub(dest, op1);
+            reg dest_out, op1_out;
+            ii.decode_sub(&dest_out, &op1_out);
+            assert(dest_out == dest);
+            assert(op1_out == op1);
         }
     }
 }

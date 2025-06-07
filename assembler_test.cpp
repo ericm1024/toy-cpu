@@ -90,21 +90,16 @@ TEST("assembler.add")
 {
     for (reg dst : k_all_registers) {
         for (reg op1 : k_all_registers) {
-            for (reg op2 : k_all_registers) {
-                std::stringstream ss;
-                ss << "add";
+            std::stringstream ss;
+            ss << "add";
 
-                ss << " ";
-                ss << to_str(dst);
+            ss << " ";
+            ss << to_str(dst);
 
-                ss << " ";
-                ss << to_str(op1);
+            ss << " ";
+            ss << to_str(op1);
 
-                ss << " ";
-                ss << to_str(op2);
-
-                do_test(ss.str(), {instr::add(dst, op1, op2)});
-            }
+            do_test(ss.str(), {instr::add(dst, op1)});
         }
     }
 }
@@ -113,21 +108,16 @@ TEST("assembler.sub")
 {
     for (reg dst : k_all_registers) {
         for (reg op1 : k_all_registers) {
-            for (reg op2 : k_all_registers) {
-                std::stringstream ss;
-                ss << "sub";
+            std::stringstream ss;
+            ss << "sub";
 
-                ss << " ";
-                ss << to_str(dst);
+            ss << " ";
+            ss << to_str(dst);
 
-                ss << " ";
-                ss << to_str(op1);
+            ss << " ";
+            ss << to_str(op1);
 
-                ss << " ";
-                ss << to_str(op2);
-
-                do_test(ss.str(), {instr::sub(dst, op1, op2)});
-            }
+            do_test(ss.str(), {instr::sub(dst, op1)});
         }
     }
 }

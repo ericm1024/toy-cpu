@@ -33,14 +33,14 @@ std::string to_str(instr const & ii)
         return std::format("load.{} {} {}", width, dest, addr);
     }
     case opcode::add: {
-        reg dest, op1, op2;
-        ii.decode_add(&dest, &op1, &op2);
-        return std::format("add {} {} {}", dest, op1, op2);
+        reg dest, op1;
+        ii.decode_add(&dest, &op1);
+        return std::format("add {} {}", dest, op1);
     }
     case opcode::sub: {
-        reg dest, op1, op2;
-        ii.decode_sub(&dest, &op1, &op2);
-        return std::format("sub {} {} {}", dest, op1, op2);
+        reg dest, op1;
+        ii.decode_sub(&dest, &op1);
+        return std::format("sub {} {}", dest, op1);
     }
     case opcode::halt:
         return "halt";

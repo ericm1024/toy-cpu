@@ -9,14 +9,14 @@
 
 static logger logger{__FILE__};
 
-void cpu::add(reg dest, reg op1, reg op2)
+void cpu::add(reg dest, reg op1)
 {
-    get(dest) = get(op1) + get(op2);
+    get(dest) = get(dest) + get(op1);
 }
 
-void cpu::sub(reg dest, reg op1, reg op2)
+void cpu::sub(reg dest, reg op1)
 {
-    get(dest) = get(op1) - get(op2);
+    get(dest) = get(dest) - get(op1);
 }
 
 void cpu::jump(cmp_flag flag, signed_word_t offset)
@@ -130,15 +130,15 @@ void system_state::run()
             break;
         }
         case opcode::add: {
-            reg dest, op1, op2;
-            instr.decode_add(&dest, &op1, &op2);
-            cpu.add(dest, op1, op2);
+            reg dest, op1;
+            instr.decode_add(&dest, &op1);
+            cpu.add(dest, op1);
             break;
         }
         case opcode::sub: {
-            reg dest, op1, op2;
-            instr.decode_sub(&dest, &op1, &op2);
-            cpu.sub(dest, op1, op2);
+            reg dest, op1;
+            instr.decode_sub(&dest, &op1);
+            cpu.sub(dest, op1);
             break;
         }
         case opcode::halt:

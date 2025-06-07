@@ -170,7 +170,7 @@ void instr_assembler::assemble_load_store(word_t width, bool is_load)
 
 void instr_assembler::assemble_add()
 {
-    assert(tokens_.size() == 3);
+    assert(tokens_.size() == 2);
 
     std::optional<reg> dst_reg = from_str<reg>(tokens_[0]);
     assert(dst_reg.has_value());
@@ -178,15 +178,12 @@ void instr_assembler::assemble_add()
     std::optional<reg> op1_reg = from_str<reg>(tokens_[1]);
     assert(op1_reg.has_value());
 
-    std::optional<reg> op2_reg = from_str<reg>(tokens_[2]);
-    assert(op2_reg.has_value());
-
-    push_instr(instr::add(*dst_reg, *op1_reg, *op2_reg));
+    push_instr(instr::add(*dst_reg, *op1_reg));
 }
 
 void instr_assembler::assemble_sub()
 {
-    assert(tokens_.size() == 3);
+    assert(tokens_.size() == 2);
 
     std::optional<reg> dst_reg = from_str<reg>(tokens_[0]);
     assert(dst_reg.has_value());
@@ -194,10 +191,7 @@ void instr_assembler::assemble_sub()
     std::optional<reg> op1_reg = from_str<reg>(tokens_[1]);
     assert(op1_reg.has_value());
 
-    std::optional<reg> op2_reg = from_str<reg>(tokens_[2]);
-    assert(op2_reg.has_value());
-
-    push_instr(instr::sub(*dst_reg, *op1_reg, *op2_reg));
+    push_instr(instr::sub(*dst_reg, *op1_reg));
 }
 
 void instr_assembler::assemble_halt()

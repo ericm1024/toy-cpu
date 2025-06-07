@@ -33,8 +33,8 @@ struct cpu
         return registers[index];
     }
 
-    void add(reg dest, reg op1, reg op2);
-    void sub(reg dest, reg op1, reg op2);
+    void add(reg dest, reg op1);
+    void sub(reg dest, reg op1);
 
     void set_cmp_flag(cpu_cmp_flags flag)
     {

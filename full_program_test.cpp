@@ -60,13 +60,13 @@ static std::vector<word_t> make_add_numbers_rom()
     rom[i_instr++] = instr::set(r2, 4).storage;
 
     // r0 = r0 + r2
-    rom[i_instr++] = instr::add(r0, r0, r2).storage;
+    rom[i_instr++] = instr::add(r0, r2).storage;
 
     // r3 <- *r0       ;; r3 holds 43
     rom[i_instr++] = instr::load4(r3, r0).storage;
 
     // r1 <- r1 + r3   ;; r1 = 42 + 43
-    rom[i_instr++] = instr::add(r1, r1, r3).storage;
+    rom[i_instr++] = instr::add(r1, r3).storage;
 
     // r0 = k_ram_base
     rom[i_instr++] = instr::set(r0, iomap::k_ram_base).storage;
@@ -111,35 +111,35 @@ recurse:
     set r2 4
 
     store r14 r15     # store r15 (return address) onto the stack
-    add r14 r14 r2    # increment stack pointer
+    add r14 r2        # increment stack pointer
 
     store r14 r0      # store r0 (function argument) onto the stack
-    add r14 r14 r2    # increment stack pointer
+    add r14 r2        # increment stack pointer
 
     set r2 1
-    sub r0 r0 r2      # compute x = x - 1
+    sub r0 r2         # compute x = x - 1
 
     call fib          # recurse, calling fib(x-1)
 
     set r2 4
-    sub r14 r14 r2    # decrement stack pointer
+    sub r14 r2        # decrement stack pointer
     load r0 r14       # pop r0 (function argument) off the stack
 
     store r14 r13     # store return value from fib(x-1) on the stack
-    add r14 r14 r2    # increment stack pointer
+    add r14 r2        # increment stack pointer
 
     set r2 2
-    sub r0 r0 r2      # compute x = x - 2
+    sub r0 r2         # compute x = x - 2
 
     call fib          # recurse, calling fib(x-2)
 
     set r2 4
-    sub r14 r14 r2    # decrement stack pointer
+    sub r14 r2        # decrement stack pointer
     load r1 r14       # pop fib(x-1) into r1
 
-    add r13 r13 r1    # set ret = fib(x-2) + fib(x-1)
+    add r13 r1        # set ret = fib(x-2) + fib(x-1)
 
-    sub r14 r14 r2    # decrement stack pointer
+    sub r14 r2        # decrement stack pointer
     load r15 r14      # pop return address off the stack
     ijump r15         # return
 

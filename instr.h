@@ -70,7 +70,6 @@ public:
     }
 
 private:
-
     struct lhs_reg_f : reg_f
     { };
 
@@ -84,8 +83,9 @@ private:
     struct width_sell_f : field<2, width_sel>
     { };
 
-    static constexpr auto load_store_builder
-        = base_instr_builder.add_field<lhs_reg_f>().add_field<rhs_reg_f>().add_field<width_sell_f>();
+    static constexpr auto load_store_builder = base_instr_builder.add_field<lhs_reg_f>()
+                                                   .add_field<rhs_reg_f>()
+                                                   .add_field<width_sell_f>();
 
     static word_t sel_to_width(width_sel width_sel)
     {
@@ -104,7 +104,9 @@ private:
     {
         assert(op == opcode::load || op == opcode::store);
         width_sel sel = width_to_sel(width);
-        return instr{load_store_builder.build(opcode_f{op}, lhs_reg_f{addr}, rhs_reg_f{src},
+        return instr{load_store_builder.build(opcode_f{op},
+                                              lhs_reg_f{addr},
+                                              rhs_reg_f{src},
                                               width_sell_f{sel})};
     }
 
@@ -168,40 +170,34 @@ public:
         return load(dest, src, 4);
     }
 
-    static instr add(reg dest, reg op1, reg op2)
+    static instr add(reg dest, reg op1)
     {
         return {opcode::add,
-                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)
-                    | (word_t{std::to_underlying(op2)} << (2 * k_reg_bits))};
+                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)};
     }
 
-    void decode_add(reg * dest, reg * op1, reg * op2) const
+    void decode_add(reg * dest, reg * op1) const
     {
         assert(get_opcode() == opcode::add);
         word_t tmp = storage >> k_opcode_bits;
         *dest = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
         *op1 = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        *op2 = static_cast<reg>(tmp & k_reg_mask);
     }
 
-    static instr sub(reg dest, reg op1, reg op2)
+    static instr sub(reg dest, reg op1)
     {
         return {opcode::sub,
-                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)
-                    | (word_t{std::to_underlying(op2)} << (2 * k_reg_bits))};
+                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)};
     }
 
-    void decode_sub(reg * dest, reg * op1, reg * op2) const
+    void decode_sub(reg * dest, reg * op1) const
     {
         assert(get_opcode() == opcode::sub);
         word_t tmp = storage >> k_opcode_bits;
         *dest = static_cast<reg>(tmp & k_reg_mask);
         tmp >>= k_reg_bits;
         *op1 = static_cast<reg>(tmp & k_reg_mask);
-        tmp >>= k_reg_bits;
-        *op2 = static_cast<reg>(tmp & k_reg_mask);
     }
 
     static instr halt()
