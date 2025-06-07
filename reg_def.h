@@ -1,0 +1,18 @@
+#define ENUM_TYPE_NAME reg
+#define ENUM_UNDERLYING_TYPE uint8_t
+X(r0)
+X(r1)
+X(r2)
+X(r3)
+X(r4)
+X(r5)
+X(r6)
+X(r7)
+X(r8)
+X(r9)
+X(r10)
+X(r11)
+X(r12)
+X(r13)
+X(r14)
+X(r15)

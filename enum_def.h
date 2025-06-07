@@ -16,7 +16,7 @@
 
 static std::string_view const ENUM_TABLE_NAME[] = {
 #define X(op)                                                           \
-    [raw(opcode::op)] = std::string_view                                \
+    [raw(ENUM_TYPE_NAME::op)] = std::string_view                                \
     {                                                                   \
         #op                                                             \
     },

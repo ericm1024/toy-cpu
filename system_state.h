@@ -57,7 +57,7 @@ public:
 
     uint8_t cpu_cmp_flags;
     word_t instr_ptr = iomap::k_rom_base;
-    word_t registers[raw(reg::num_registers)]{};
+    word_t registers[k_num_registers]{};
 };
 
 struct system_state

@@ -146,7 +146,9 @@ public:
 
     static instr add(reg dest, reg op1, reg op2)
     {
-        return {opcode::add, raw(dest) | (raw(op1) << k_reg_bits) | (raw(op2) << (2 * k_reg_bits))};
+        return {opcode::add,
+                word_t{raw(dest)} | (word_t{raw(op1)} << k_reg_bits)
+                    | (word_t{raw(op2)} << (2 * k_reg_bits))};
     }
 
     void decode_add(reg * dest, reg * op1, reg * op2) const
@@ -162,7 +164,9 @@ public:
 
     static instr sub(reg dest, reg op1, reg op2)
     {
-        return {opcode::sub, raw(dest) | (raw(op1) << k_reg_bits) | (raw(op2) << (2 * k_reg_bits))};
+        return {opcode::sub,
+                word_t{raw(dest)} | (word_t{raw(op1)} << k_reg_bits)
+                    | (word_t{raw(op2)} << (2 * k_reg_bits))};
     }
 
     void decode_sub(reg * dest, reg * op1, reg * op2) const
@@ -183,7 +187,7 @@ public:
 
     static instr compare(reg op1, reg op2)
     {
-        return {opcode::compare, raw(op1) | (raw(op2) << k_reg_bits)};
+        return {opcode::compare, word_t{raw(op1)} | (word_t{raw(op2)} << k_reg_bits)};
     }
 
     void decode_compare(reg * op1, reg * op2) const
