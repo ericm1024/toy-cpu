@@ -94,7 +94,7 @@ private:
         assert(op == opcode::load || op == opcode::store);
         width_sel sel = width_to_sel(width);
         return {op,
-                raw(addr) | raw(src) << (k_reg_bits)
+                std::to_underlying(addr) | std::to_underlying(src) << (k_reg_bits)
                     | static_cast<word_t>(sel) << (2 * k_reg_bits)};
     }
 
@@ -165,8 +165,8 @@ public:
     static instr add(reg dest, reg op1, reg op2)
     {
         return {opcode::add,
-                word_t{raw(dest)} | (word_t{raw(op1)} << k_reg_bits)
-                    | (word_t{raw(op2)} << (2 * k_reg_bits))};
+                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)
+                    | (word_t{std::to_underlying(op2)} << (2 * k_reg_bits))};
     }
 
     void decode_add(reg * dest, reg * op1, reg * op2) const
@@ -183,8 +183,8 @@ public:
     static instr sub(reg dest, reg op1, reg op2)
     {
         return {opcode::sub,
-                word_t{raw(dest)} | (word_t{raw(op1)} << k_reg_bits)
-                    | (word_t{raw(op2)} << (2 * k_reg_bits))};
+                word_t{std::to_underlying(dest)} | (word_t{std::to_underlying(op1)} << k_reg_bits)
+                    | (word_t{std::to_underlying(op2)} << (2 * k_reg_bits))};
     }
 
     void decode_sub(reg * dest, reg * op1, reg * op2) const
@@ -205,7 +205,8 @@ public:
 
     static instr compare(reg op1, reg op2)
     {
-        return {opcode::compare, word_t{raw(op1)} | (word_t{raw(op2)} << k_reg_bits)};
+        return {opcode::compare,
+                word_t{std::to_underlying(op1)} | (word_t{std::to_underlying(op2)} << k_reg_bits)};
     }
 
     void decode_compare(reg * op1, reg * op2) const
@@ -260,7 +261,8 @@ public:
 
     static instr ijump(cmp_flag flag, reg loc)
     {
-        return {opcode::ijump, static_cast<word_t>(flag) | raw(loc) << k_cmp_flag_bits};
+        return {opcode::ijump,
+                static_cast<word_t>(flag) | std::to_underlying(loc) << k_cmp_flag_bits};
     }
 
     void decode_ijump(cmp_flag * flag, reg * loc) const

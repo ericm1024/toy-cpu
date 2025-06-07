@@ -16,11 +16,6 @@ enum class ENUM_TYPE_NAME : ENUM_UNDERLYING_TYPE
 #undef X
 };
 
-static constexpr ENUM_UNDERLYING_TYPE raw(ENUM_TYPE_NAME value)
-{
-    return static_cast<ENUM_UNDERLYING_TYPE>(value);
-}
-
 std::string_view to_str(ENUM_TYPE_NAME);
 
 template <typename T>

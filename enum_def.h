@@ -7,6 +7,7 @@
 #include <iterator>
 #include <optional>
 #include <string_view>
+#include <utility>
 
 #define X(arg)
 #include ENUM_DEF_FILE_NAME
@@ -16,7 +17,7 @@
 
 static std::string_view const ENUM_TABLE_NAME[] = {
 #define X(op)                                                           \
-    [raw(ENUM_TYPE_NAME::op)] = std::string_view                                \
+    [std::to_underlying(ENUM_TYPE_NAME::op)] = std::string_view                                \
     {                                                                   \
         #op                                                             \
     },
@@ -37,7 +38,7 @@ std::optional<ENUM_TYPE_NAME> from_str<ENUM_TYPE_NAME>(std::string_view str)
 
 std::string_view to_str(ENUM_TYPE_NAME op)
 {
-    auto index = raw(op);
+    auto index = std::to_underlying(op);
     if (index >= std::size(ENUM_TABLE_NAME)) {
         return "unknown";
     }

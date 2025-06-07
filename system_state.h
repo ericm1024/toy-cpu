@@ -28,7 +28,7 @@ struct cpu
 
     word_t & get(reg reg)
     {
-        word_t index = raw(reg);
+        word_t index = std::to_underlying(reg);
         assert(index < std::size(registers));
         return registers[index];
     }
