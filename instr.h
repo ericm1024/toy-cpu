@@ -48,15 +48,14 @@ public:
     }
 
 private:
-    struct set_val_f : field<20, word_t>
+    struct set_val_f : field<k_all_remaining_bits, word_t>
     { };
 
     static constexpr auto set_builder
         = base_instr_builder.add_field<reg_f>().add_field<set_val_f>();
 
 public:
-    static word_t constexpr k_max_set_value
-        = (1U << (k_instr_bits - k_opcode_bits - k_reg_bits)) - 1;
+    static word_t constexpr k_max_set_value = set_builder.max_value<set_val_f>();
 
     // value can be at most 20 bits
     static instr set(reg dest, word_t value)
