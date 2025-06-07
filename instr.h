@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitfield_builder.h"
 #include "cpu_base.h"
 #include "opcode.h"
 #include "reg.h"
@@ -22,10 +23,18 @@ static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 // First 8 bits are opcode, rest are opcode-dependent
 struct instr
 {
+private:
+    struct opcode_f : field<8, opcode>
+    { };
+    struct reg_f : field<k_reg_bits, reg>
+    { };
+
+    static constexpr auto base_instr_builder = bitfield_builder<word_t>().add_field<opcode_f>();
+
+public:
     explicit instr(word_t raw)
-    {
-        storage = raw;
-    }
+        : storage{raw}
+    { }
 
     instr(opcode op, word_t tail)
     {
@@ -35,25 +44,31 @@ struct instr
 
     opcode get_opcode() const
     {
-        return static_cast<opcode>(storage & k_opcode_mask);
+        return base_instr_builder.extract<opcode_f>(storage);
     }
 
+private:
+    struct set_val_f : field<20, word_t>
+    { };
+
+    static constexpr auto set_builder
+        = base_instr_builder.add_field<reg_f>().add_field<set_val_f>();
+
+public:
     static word_t constexpr k_max_set_value
         = (1U << (k_instr_bits - k_opcode_bits - k_reg_bits)) - 1;
 
     // value can be at most 20 bits
     static instr set(reg dest, word_t value)
     {
-        assert(value <= k_max_set_value);
-        return {opcode::set, raw(dest) | (value << k_reg_bits)};
+        return instr{set_builder.build(opcode_f{opcode::set}, reg_f{dest}, set_val_f{value})};
     }
 
     void decode_set(reg * dest, word_t * value) const
     {
         assert(get_opcode() == opcode::set);
-        word_t tmp = storage >> k_opcode_bits;
-        *dest = static_cast<reg>(tmp & k_reg_mask);
-        *value = tmp >> k_reg_bits;
+        *dest = set_builder.extract<reg_f>(storage);
+        *value = set_builder.extract<set_val_f>(storage);
     }
 
 private:
