@@ -6,13 +6,8 @@
 #include <string_view>
 #include <type_traits>
 
-enum class log_level : uint8_t
-{
-    debug,
-    info,
-    err,
-    abort
-};
+#define ENUM_DEF_FILE_NAME "log_level_def.h"
+#include "enum_decl.h" // IWYU pragma: export
 
 struct logger
 {
