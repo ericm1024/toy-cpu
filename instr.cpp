@@ -2,40 +2,14 @@
 
 #include <iterator>
 
-static std::string_view const cmp_flag_to_str[] = {
-#define MAKE_ENTRY(flag)                                                                           \
-    [static_cast<uint8_t>(cmp_flag::flag)] = std::string_view                                      \
-    {                                                                                              \
-        #flag                                                                                      \
-    }
-
-    MAKE_ENTRY(eq),
-    MAKE_ENTRY(ne),
-    MAKE_ENTRY(gt),
-    MAKE_ENTRY(ge),
-    MAKE_ENTRY(lt),
-    MAKE_ENTRY(le),
-    MAKE_ENTRY(unc),
-};
+#define ENUM_DEF_FILE_NAME "cmp_flag_def.h"
+#include "enum_def.h"
 
 std::initializer_list<cmp_flag> const instr::k_all_cmp_flags{
-    instr::eq,
-    instr::ne,
-    instr::gt,
-    instr::ge,
-    instr::lt,
-    instr::le,
-    instr::unc,
+#define X(x) x,
+#include "cmp_flag_def.h"
+#undef X
 };
-
-std::string_view to_str(cmp_flag flag)
-{
-    word_t index = static_cast<uint8_t>(flag);
-    if (index >= std::size(cmp_flag_to_str)) {
-        return "unknown";
-    }
-    return cmp_flag_to_str[index];
-}
 
 std::string to_str(instr const & ii)
 {

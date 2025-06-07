@@ -15,16 +15,8 @@
 
 static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 
-enum class cmp_flag : uint8_t
-{
-    eq,
-    ne,
-    gt,
-    ge,
-    lt,
-    le,
-    unc,
-};
+#define ENUM_DEF_FILE_NAME "cmp_flag_def.h"
+#include "enum_decl.h" // IWYU pragma: export
 
 // Instructions are 32 bits
 // First 8 bits are opcode, rest are opcode-dependent
