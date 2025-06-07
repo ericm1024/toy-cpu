@@ -4,7 +4,7 @@
 
 static std::string_view const cmp_flag_to_str[] = {
 #define MAKE_ENTRY(flag)                                                                           \
-    [static_cast<uint8_t>(instr::cmp_flag::flag)] = std::string_view                               \
+    [static_cast<uint8_t>(cmp_flag::flag)] = std::string_view                                      \
     {                                                                                              \
         #flag                                                                                      \
     }
@@ -18,7 +18,7 @@ static std::string_view const cmp_flag_to_str[] = {
     MAKE_ENTRY(unc),
 };
 
-std::initializer_list<instr::cmp_flag> const instr::k_all_cmp_flags{
+std::initializer_list<cmp_flag> const instr::k_all_cmp_flags{
     instr::eq,
     instr::ne,
     instr::gt,
@@ -28,7 +28,7 @@ std::initializer_list<instr::cmp_flag> const instr::k_all_cmp_flags{
     instr::unc,
 };
 
-std::string_view to_str(instr::cmp_flag flag)
+std::string_view to_str(cmp_flag flag)
 {
     word_t index = static_cast<uint8_t>(flag);
     if (index >= std::size(cmp_flag_to_str)) {
@@ -76,13 +76,13 @@ std::string to_str(instr const & ii)
         return std::format("compare {} {}", op1, op2);
     }
     case opcode::jump: {
-        instr::cmp_flag flag;
+        cmp_flag flag;
         signed_word_t relative_offset;
         ii.decode_jump(&flag, &relative_offset);
         return std::format("jump.{} {}", to_str(flag), relative_offset);
     }
     case opcode::ijump: {
-        instr::cmp_flag flag;
+        cmp_flag flag;
         reg loc;
         ii.decode_ijump(&flag, &loc);
         return std::format("ijump.{} {}", flag, loc);

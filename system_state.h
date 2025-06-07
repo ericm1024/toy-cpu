@@ -46,11 +46,11 @@ struct cpu
         return cpu_cmp_flags & (1 << static_cast<uint8_t>(flag));
     }
 
-    void jump(instr::cmp_flag flag, signed_word_t offset);
-    void ijump(instr::cmp_flag flag, reg loc);
+    void jump(cmp_flag flag, signed_word_t offset);
+    void ijump(cmp_flag flag, reg loc);
 
 private:
-    bool is_taken(instr::cmp_flag flag) const;
+    bool is_taken(cmp_flag flag) const;
 
 public:
     void call(signed_word_t offset);

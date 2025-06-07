@@ -64,17 +64,17 @@ private:
 
     void assemble_compare();
 
-    void assemble_jump(instr::cmp_flag flag);
+    void assemble_jump(cmp_flag flag);
 
-    template <instr::cmp_flag flag>
+    template <cmp_flag flag>
     void assemble_jump()
     {
         assemble_jump(flag);
     }
 
-    void assemble_ijump(instr::cmp_flag flag);
+    void assemble_ijump(cmp_flag flag);
 
-    template <instr::cmp_flag flag>
+    template <cmp_flag flag>
     void assemble_ijump()
     {
         assemble_ijump(flag);
@@ -220,7 +220,7 @@ void instr_assembler::assemble_compare()
     push_instr(instr::compare(*op1_reg, *op2_reg));
 }
 
-void instr_assembler::assemble_jump(instr::cmp_flag flag)
+void instr_assembler::assemble_jump(cmp_flag flag)
 {
     assert(tokens_.size() == 1);
 
@@ -235,7 +235,7 @@ void instr_assembler::assemble_jump(instr::cmp_flag flag)
     push_instr(instr::jump(flag, offset));
 }
 
-void instr_assembler::assemble_ijump(instr::cmp_flag flag)
+void instr_assembler::assemble_ijump(cmp_flag flag)
 {
     assert(tokens_.size() == 1);
 

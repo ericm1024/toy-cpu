@@ -15,6 +15,17 @@
 
 static size_t constexpr k_instr_bits = sizeof(word_t) * 8;
 
+enum class cmp_flag : uint8_t
+{
+    eq,
+    ne,
+    gt,
+    ge,
+    lt,
+    le,
+    unc,
+};
+
 // Instructions are 32 bits
 // First 8 bits are opcode, rest are opcode-dependent
 struct instr
@@ -199,16 +210,6 @@ public:
         *op2 = static_cast<reg>(tmp & k_reg_mask);
     }
 
-    enum class cmp_flag : uint8_t
-    {
-        eq,
-        ne,
-        gt,
-        ge,
-        lt,
-        le,
-        unc,
-    };
     using enum cmp_flag;
 
     static std::initializer_list<cmp_flag> const k_all_cmp_flags;
@@ -297,7 +298,7 @@ public:
     word_t storage;
 };
 
-std::string_view to_str(instr::cmp_flag flag);
+std::string_view to_str(cmp_flag flag);
 
 template <typename T>
 std::optional<T> from_str(std::string_view str);
@@ -326,7 +327,7 @@ struct std::formatter<instr>
 };
 
 template <>
-struct std::formatter<instr::cmp_flag>
+struct std::formatter<cmp_flag>
 {
     template <class ParseContext>
     constexpr std::format_parse_context::iterator parse(ParseContext & ctx)
@@ -335,7 +336,7 @@ struct std::formatter<instr::cmp_flag>
     }
 
     template <class FormatContext>
-    auto format(instr::cmp_flag const & flag, FormatContext & ctx) const
+    auto format(cmp_flag const & flag, FormatContext & ctx) const
     {
         return std::format_to(ctx.out(), "{}", to_str(flag));
     }

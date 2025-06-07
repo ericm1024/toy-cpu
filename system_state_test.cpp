@@ -114,31 +114,31 @@ TEST("system_state.execute.jump")
 {
     struct
     {
-        instr::cmp_flag flag;
+        cmp_flag flag;
         std::pair<word_t, word_t> comparison;
         bool taken;
     } cases[] = {
-        {instr::cmp_flag::eq, {1, 1}, true},
-        {instr::cmp_flag::eq, {1, 0}, false},
+        {cmp_flag::eq, {1, 1}, true},
+        {cmp_flag::eq, {1, 0}, false},
 
-        {instr::cmp_flag::ne, {1, 0}, true},
-        {instr::cmp_flag::ne, {1, 1}, false},
+        {cmp_flag::ne, {1, 0}, true},
+        {cmp_flag::ne, {1, 1}, false},
 
-        {instr::cmp_flag::gt, {1, 0}, true},
-        {instr::cmp_flag::gt, {1, 1}, false},
-        {instr::cmp_flag::gt, {1, 2}, false},
+        {cmp_flag::gt, {1, 0}, true},
+        {cmp_flag::gt, {1, 1}, false},
+        {cmp_flag::gt, {1, 2}, false},
 
-        {instr::cmp_flag::ge, {1, 0}, true},
-        {instr::cmp_flag::ge, {1, 1}, true},
-        {instr::cmp_flag::ge, {1, 2}, false},
+        {cmp_flag::ge, {1, 0}, true},
+        {cmp_flag::ge, {1, 1}, true},
+        {cmp_flag::ge, {1, 2}, false},
 
-        {instr::cmp_flag::lt, {1, 0}, false},
-        {instr::cmp_flag::lt, {1, 1}, false},
-        {instr::cmp_flag::lt, {1, 2}, true},
+        {cmp_flag::lt, {1, 0}, false},
+        {cmp_flag::lt, {1, 1}, false},
+        {cmp_flag::lt, {1, 2}, true},
 
-        {instr::cmp_flag::le, {1, 0}, false},
-        {instr::cmp_flag::le, {1, 1}, true},
-        {instr::cmp_flag::le, {1, 2}, true},
+        {cmp_flag::le, {1, 0}, false},
+        {cmp_flag::le, {1, 1}, true},
+        {cmp_flag::le, {1, 2}, true},
     };
 
     for (auto [flag, comparison, taken] : cases) {

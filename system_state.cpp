@@ -19,7 +19,7 @@ void cpu::sub(reg dest, reg op1, reg op2)
     get(dest) = get(op1) - get(op2);
 }
 
-void cpu::jump(instr::cmp_flag flag, signed_word_t offset)
+void cpu::jump(cmp_flag flag, signed_word_t offset)
 {
     if (is_taken(flag)) {
         instr_ptr += offset;
@@ -29,7 +29,7 @@ void cpu::jump(instr::cmp_flag flag, signed_word_t offset)
     }
 }
 
-void cpu::ijump(instr::cmp_flag flag, reg loc)
+void cpu::ijump(cmp_flag flag, reg loc)
 {
     if (is_taken(flag)) {
         instr_ptr = get(loc);
@@ -39,7 +39,7 @@ void cpu::ijump(instr::cmp_flag flag, reg loc)
     }
 }
 
-bool cpu::is_taken(instr::cmp_flag flag) const
+bool cpu::is_taken(cmp_flag flag) const
 {
     switch (flag) {
     case instr::eq:
@@ -150,14 +150,14 @@ void system_state::run()
             break;
         }
         case opcode::jump: {
-            instr::cmp_flag flag;
+            cmp_flag flag;
             signed_word_t offset;
             instr.decode_jump(&flag, &offset);
             cpu.jump(flag, offset);
             break;
         }
         case opcode::ijump: {
-            instr::cmp_flag flag;
+            cmp_flag flag;
             reg loc;
             instr.decode_ijump(&flag, &loc);
             cpu.ijump(flag, loc);

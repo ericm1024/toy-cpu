@@ -154,7 +154,7 @@ TEST("assembler.cmp")
     }
 }
 
-static void test_jump(signed_word_t offset, instr::cmp_flag flag, bool adorn = true)
+static void test_jump(signed_word_t offset, cmp_flag flag, bool adorn = true)
 {
     std::stringstream ss;
     ss << "jump";
@@ -172,7 +172,7 @@ static void test_jump(signed_word_t offset, instr::cmp_flag flag, bool adorn = t
 TEST("assembler.jump")
 {
     for (signed_word_t offset : {instr::k_jump_min_offset, -4, 0, 4, instr::k_jump_max_offset}) {
-        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+        for (cmp_flag flag : instr::k_all_cmp_flags) {
             test_jump(offset, flag);
         }
 
@@ -203,7 +203,7 @@ jump.eq label
             {instr::compare(r0, r1), instr::jump(instr::eq, -4)});
 }
 
-static void test_ijump(reg loc, instr::cmp_flag flag, bool adorn = true)
+static void test_ijump(reg loc, cmp_flag flag, bool adorn = true)
 {
     std::stringstream ss;
     ss << "ijump";
@@ -221,7 +221,7 @@ static void test_ijump(reg loc, instr::cmp_flag flag, bool adorn = true)
 TEST("assembler.ijump")
 {
     for (reg loc : k_all_registers) {
-        for (instr::cmp_flag flag : instr::k_all_cmp_flags) {
+        for (cmp_flag flag : instr::k_all_cmp_flags) {
             test_ijump(loc, flag);
         }
 
