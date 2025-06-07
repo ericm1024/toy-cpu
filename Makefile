@@ -1,7 +1,7 @@
 
 CXX=clang++
 WARNINGS=-Werror -Wall -Wextra -Wswitch-enum -Wno-c99-designator
-CXXFLAGS=$(WARNINGS) -std=c++20 -g
+CXXFLAGS=$(WARNINGS) -std=c++23 -g -stdlib=libc++
 COV_FLAGS=-fprofile-instr-generate -fcoverage-mapping
 DBG_FLAGS=-fsanitize=address -fsanitize=undefined
 
