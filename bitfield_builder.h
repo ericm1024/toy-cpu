@@ -1,11 +1,12 @@
 #pragma once
 
+#include <cassert>
 #include <concepts>
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 // TODO:
-// * bounds checking in build
 // * "all remaining bits"-sized fields
 // * expose min/max values of fields
 
@@ -15,7 +16,7 @@ struct field
     static size_t constexpr width = width_in;
     using repr_type = repr_t;
 
-    repr_type repr;
+    repr_type value;
 };
 
 template <typename field_t>
@@ -25,7 +26,7 @@ struct field_info
     uint8_t start = 0;
 };
 
-template <std::integral storage_t, typename... field_ts>
+template <std::unsigned_integral storage_t, typename... field_ts>
 struct bitfield_builder : private field_info<field_ts>...
 {
     template <typename field_t>
@@ -42,9 +43,7 @@ struct bitfield_builder : private field_info<field_ts>...
 
     storage_t build(field_ts... fields) const
     {
-        return ((static_cast<storage_t>(fields.repr)
-                 << static_cast<field_info<field_ts> const &>(*this).start)
-                | ...);
+        return (build_one_field<field_ts>(fields) | ...);
     }
 
     template <typename field_t>
@@ -57,6 +56,15 @@ struct bitfield_builder : private field_info<field_ts>...
     }
 
 private:
-    template <std::integral, typename...>
+    template <typename field_t>
+    storage_t build_one_field(field_t field) const
+    {
+        assert(static_cast<uintmax_t>(field.value) <= std::numeric_limits<storage_t>::max());
+        assert(static_cast<uintmax_t>(field.value) < (storage_t{1} << field_t::width));
+        return static_cast<storage_t>(field.value)
+               << static_cast<field_info<field_t> const &>(*this).start;
+    }
+
+    template <std::unsigned_integral, typename...>
     friend struct bitfield_builder;
 };
